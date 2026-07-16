@@ -1,0 +1,1687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>APIs for PMs — An Interactive Crash Course</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --panel: #171a23;
+    --panel-2: #1e222e;
+    --border: #2a2f3c;
+    --text: #e6e9ef;
+    --muted: #9aa3b2;
+    --accent: #4f8cff;
+    --accent-soft: #1f2c45;
+    --green: #3ecf8e;
+    --green-soft: #15291f;
+    --yellow: #f5c451;
+    --yellow-soft: #2c2613;
+    --orange: #ff9f43;
+    --red: #ff6b6b;
+    --red-soft: #2c1717;
+    --purple: #b07bff;
+    --code-bg: #0b0d12;
+    --radius: 12px;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); }
+
+  /* Layout */
+  .shell { display: flex; min-height: 100vh; }
+  .sidebar {
+    width: 280px;
+    flex-shrink: 0;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 24px 0;
+  }
+  .sidebar h1 {
+    font-size: 15px;
+    margin: 0 24px 4px;
+    letter-spacing: .3px;
+  }
+  .sidebar .sub { margin: 0 24px 20px; color: var(--muted); font-size: 12.5px; }
+  .nav-group-label {
+    text-transform: uppercase;
+    font-size: 10.5px;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin: 18px 24px 6px;
+    font-weight: 600;
+  }
+  .nav a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 24px;
+    color: var(--text);
+    text-decoration: none;
+    font-size: 14px;
+    border-left: 3px solid transparent;
+    cursor: pointer;
+  }
+  .nav a:hover { background: var(--panel-2); }
+  .nav a.active { background: var(--accent-soft); border-left-color: var(--accent); color: #fff; }
+  .nav a .ic { width: 18px; text-align: center; opacity: .85; }
+
+  .content { flex: 1; min-width: 0; }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 56px 32px 120px; }
+
+  section.module { display: none; animation: fade .25s ease; }
+  section.module.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px);} to {opacity:1; transform:none;} }
+
+  .eyebrow { color: var(--accent); font-weight: 600; font-size: 13px; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 8px; }
+  h2.title { font-size: 30px; margin: 0 0 8px; line-height: 1.2; }
+  .lead { color: var(--muted); font-size: 17px; margin-bottom: 28px; }
+  h3 { font-size: 20px; margin: 36px 0 10px; }
+  h4 { font-size: 16px; margin: 24px 0 8px; }
+  p { margin: 12px 0; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 6px 0; }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin: 20px 0;
+  }
+  .analogy {
+    background: var(--accent-soft);
+    border: 1px solid #2c4170;
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin: 18px 0;
+  }
+  .analogy .tag { color: var(--accent); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+  .callout {
+    border-left: 3px solid var(--yellow);
+    background: var(--yellow-soft);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 18px 0;
+    font-size: 14.5px;
+  }
+  .callout.danger { border-left-color: var(--red); background: var(--red-soft); }
+  .callout.good { border-left-color: var(--green); background: var(--green-soft); }
+  .callout b { color: #fff; }
+
+  code { font-family: var(--mono); background: var(--panel-2); padding: 2px 6px; border-radius: 5px; font-size: 13px; }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.55;
+  }
+  pre code { background: none; padding: 0; }
+  .tok-method { color: var(--green); }
+  .tok-url { color: var(--accent); }
+  .tok-key { color: var(--purple); }
+  .tok-str { color: var(--yellow); }
+  .tok-flag { color: var(--orange); }
+  .tok-comment { color: var(--muted); }
+
+  /* Interactive blocks */
+  .demo {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin: 24px 0;
+  }
+  .demo-head {
+    background: var(--panel-2);
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .demo-head .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .demo-body { padding: 18px; }
+
+  .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+  label.fld { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+  select, input[type=text], textarea {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 9px 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    width: 100%;
+  }
+  textarea { resize: vertical; min-height: 70px; }
+  select:focus, input:focus, textarea:focus { outline: none; border-color: var(--accent); }
+
+  button.btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter .15s;
+  }
+  button.btn:hover { filter: brightness(1.1); }
+  button.btn.ghost { background: var(--panel-2); border: 1px solid var(--border); }
+  button.btn.danger { background: var(--red); }
+  button.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+  .pill {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 6px;
+  }
+  .pill.get { background: var(--green-soft); color: var(--green); }
+  .pill.post { background: var(--yellow-soft); color: var(--yellow); }
+  .pill.put, .pill.patch { background: #1c2740; color: var(--accent); }
+  .pill.delete { background: var(--red-soft); color: var(--red); }
+
+  .status-line { font-family: var(--mono); font-size: 13px; margin: 6px 0; }
+  .s2 { color: var(--green); } .s3 { color: var(--accent); } .s4 { color: var(--orange); } .s5 { color: var(--red); }
+
+  .resp-box {
+    margin-top: 14px;
+    border-top: 1px dashed var(--border);
+    padding-top: 14px;
+    display: none;
+  }
+  .resp-box.show { display: block; }
+  .meta-row { display: flex; gap: 18px; flex-wrap: wrap; font-family: var(--mono); font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .meta-row b { color: var(--text); }
+
+  /* status code grid */
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); gap: 10px; margin: 16px 0; }
+  .scode {
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 12px;
+    cursor: pointer;
+    background: var(--panel);
+    transition: transform .1s, border-color .15s;
+  }
+  .scode:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .scode .num { font-family: var(--mono); font-size: 18px; font-weight: 700; }
+  .scode .nm { font-size: 12.5px; color: var(--muted); }
+  .scode.act { border-color: var(--accent); background: var(--accent-soft); }
+
+  /* websocket */
+  .ws-feed {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    height: 200px;
+    overflow-y: auto;
+    padding: 12px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+  }
+  .ws-msg { padding: 3px 0; border-bottom: 1px solid #161a22; }
+  .ws-msg .t { color: var(--muted); }
+  .ws-msg .up { color: var(--green); }
+  .ws-msg .down { color: var(--red); }
+  .conn-dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+  .conn-dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .conn-dot.off { background: var(--red); }
+
+  /* quiz */
+  .quiz-q { margin: 20px 0; }
+  .quiz-q .qn { font-weight: 600; margin-bottom: 10px; }
+  .opt {
+    display: block;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 11px 14px;
+    margin: 7px 0;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background .12s;
+  }
+  .opt:hover { background: var(--panel-2); }
+  .opt.correct { border-color: var(--green); background: var(--green-soft); }
+  .opt.wrong { border-color: var(--red); background: var(--red-soft); }
+  .opt.disabled { pointer-events: none; opacity: .85; }
+  .explain { font-size: 13.5px; color: var(--muted); margin-top: 8px; display: none; padding-left: 4px; border-left: 2px solid var(--accent); padding: 6px 0 6px 12px; }
+  .explain.show { display: block; }
+
+  table.ref { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  table.ref th, table.ref td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.ref th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .5px; }
+
+  .footnav { display: flex; justify-content: space-between; margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .footnav button { background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 12px 16px; cursor: pointer; font-size: 14px; max-width: 48%; text-align: left; }
+  .footnav button:hover { border-color: var(--accent); }
+  .footnav .lbl { display: block; font-size: 11px; color: var(--muted); }
+  .footnav button:last-child { text-align: right; }
+
+  .progress-wrap { padding: 0 24px; margin-top: 8px; }
+  .progress-bar { height: 4px; background: var(--panel-2); border-radius: 4px; overflow: hidden; }
+  .progress-bar i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+
+  .hamburger { display: none; }
+
+  @media (max-width: 820px) {
+    .sidebar { position: fixed; left: -300px; z-index: 50; transition: left .25s; box-shadow: 2px 0 20px rgba(0,0,0,.5); }
+    .sidebar.open { left: 0; }
+    .hamburger { display: inline-flex; position: fixed; top: 14px; left: 14px; z-index: 60; background: var(--panel); border: 1px solid var(--border); color: var(--text); border-radius: 8px; padding: 8px 12px; cursor: pointer; }
+    .wrap { padding: 70px 18px 100px; }
+  }
+</style>
+</head>
+<body>
+<button class="hamburger" id="hamburger">☰ Menu</button>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <h1>APIs for PMs</h1>
+    <div class="sub">An interactive crash course. No coding required.</div>
+    <div class="progress-wrap">
+      <div class="progress-bar"><i id="progFill"></i></div>
+    </div>
+    <div class="nav" id="nav">
+      <div class="nav-group-label">Foundations</div>
+      <a data-target="intro" class="active"><span class="ic">🧭</span> Start here</a>
+      <a data-target="bigpicture"><span class="ic">🌐</span> How systems talk</a>
+      <a data-target="apis"><span class="ic">🔌</span> What is an API</a>
+      <div class="nav-group-label">The Mechanics</div>
+      <a data-target="anatomy"><span class="ic">🧬</span> Anatomy of a request</a>
+      <a data-target="methods"><span class="ic">🔀</span> HTTP methods</a>
+      <a data-target="status"><span class="ic">🚦</span> Status codes</a>
+      <a data-target="https"><span class="ic">🔒</span> HTTPS &amp; security</a>
+      <div class="nav-group-label">Tools &amp; Real-time</div>
+      <a data-target="curl"><span class="ic">⌨️</span> Reading curl</a>
+      <a data-target="websockets"><span class="ic">⚡</span> WebSockets</a>
+      <a data-target="webhooks"><span class="ic">🔔</span> Webhooks</a>
+      <div class="nav-group-label">The Real Thing</div>
+      <a data-target="live"><span class="ic">🚀</span> Go live: a real request</a>
+      <div class="nav-group-label">When It Breaks</div>
+      <a data-target="debug"><span class="ic">🔧</span> Troubleshooting playbook</a>
+      <a data-target="devtools"><span class="ic">🕵️</span> Where to look</a>
+      <a data-target="quiz"><span class="ic">🎓</span> Test yourself</a>
+      <a data-target="glossary"><span class="ic">📖</span> Glossary</a>
+    </div>
+  </aside>
+
+  <main class="content">
+    <div class="wrap">
+
+      <!-- ============ INTRO ============ -->
+      <section class="module active" id="intro">
+        <div class="eyebrow">Welcome</div>
+        <h2 class="title">Enough about APIs to know what's happening — and where to look when it breaks</h2>
+        <p class="lead">Built for product managers. You won't write code. You'll learn to read the conversation between systems, recognize the failure signatures, and ask engineering the right questions.</p>
+
+        <div class="card">
+          <h4 style="margin-top:0">What you'll be able to do by the end</h4>
+          <ul>
+            <li>Read a log line or error and know roughly <b>whose fault it is</b> — the app, the server, or the network.</li>
+            <li>Understand what an engineer means by "the API returned a 500" or "it's a CORS issue."</li>
+            <li>Open your browser's Network tab during an incident and <b>see the actual requests failing</b>.</li>
+            <li>Tell the difference between "slow," "broken," and "rejected" — three very different bugs.</li>
+          </ul>
+        </div>
+
+        <div class="analogy">
+          <span class="tag">The one analogy to hold onto</span>
+          <p style="margin:8px 0 0">Think of software systems as people in a giant office building who can only communicate by <b>passing notes</b>. An <b>API</b> is the set of rules for what a valid note looks like and what counts as a valid reply. Almost everything in this course is just: <em>what's on the note, who it went to, and what came back.</em></p>
+        </div>
+
+        <p>We'll use <b>fintech / banking examples</b> throughout — balances, transactions, payments, live price feeds — since that's the world you'll recognize. Every demo on this site is <b>simulated in your browser</b>: nothing is sent over the internet, so you can click freely — <em>except</em> the final <b>🚀 Go Live</b> module, where you'll send a <b>real request to a real public API</b>, on purpose. That's the graduation moment.</p>
+
+        <div class="callout good"><b>How to use this:</b> Go in order the first time — each module builds on the last. The demos are the point; click every button. Your progress is tracked in the bar on the left.</div>
+
+        <div class="footnav">
+          <span></span>
+          <button onclick="go('bigpicture')"><span class="lbl">Next →</span> How systems talk</button>
+        </div>
+      </section>
+
+      <!-- ============ BIG PICTURE ============ -->
+      <section class="module" id="bigpicture">
+        <div class="eyebrow">Foundations</div>
+        <h2 class="title">How two systems talk: the request / response cycle</h2>
+        <p class="lead">Every interaction you care about is one machine asking another machine for something, and getting an answer back. Master this shape and the rest is detail.</p>
+
+        <h3>Client and server</h3>
+        <p>Two roles in every conversation:</p>
+        <ul>
+          <li><b>Client</b> — the one who <em>asks</em>. Your banking app on a phone, a website in a browser, another internal service.</li>
+          <li><b>Server</b> — the one who <em>answers</em>. The bank's computers that actually hold the account data.</li>
+        </ul>
+
+        <div class="analogy">
+          <span class="tag">Analogy: the bank teller</span>
+          <p style="margin:8px 0 0">You (the <b>client</b>) walk up to a teller (the <b>server</b>) and say "What's the balance on account 4471?" The teller checks, and says "₹52,300." You asked a <b>request</b>; they gave a <b>response</b>. You don't get to walk behind the counter and rummage through the vault — you can only ask in the approved way. That approved way <em>is</em> the API.</p>
+        </div>
+
+        <h3>The cycle, every single time</h3>
+        <div class="card">
+          <ol style="margin:0">
+            <li><b>Client sends a request</b> — "I want the balance for account 4471."</li>
+            <li><b>Request travels over the network</b> — across wifi, cables, the internet.</li>
+            <li><b>Server receives it, does work</b> — checks you're allowed, looks up the data.</li>
+            <li><b>Server sends a response</b> — the balance, plus a status saying how it went.</li>
+            <li><b>Response travels back</b> — and your app shows it on screen.</li>
+          </ol>
+        </div>
+
+        <div class="callout"><b>Why this matters for debugging:</b> when something breaks, it broke at <em>one specific step</em>. "Did the request even leave the phone?" "Did the server get it but reject it?" "Did the server answer but the answer was wrong?" These are different bugs with different owners. Most of this course is teaching you to locate the broken step.</div>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Interactive: watch a request travel</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">Press play to walk one request through the cycle.</p>
+            <div id="cycleStage" style="font-family:var(--mono);font-size:13px;line-height:2;min-height:150px">
+              <div data-step="0">📱 <b>Your banking app</b> (client) — idle</div>
+            </div>
+            <button class="btn" onclick="playCycle()">▶ Send a request</button>
+          </div>
+        </div>
+
+        <div class="footnav">
+          <button onclick="go('intro')"><span class="lbl">← Previous</span> Start here</button>
+          <button onclick="go('apis')"><span class="lbl">Next →</span> What is an API</button>
+        </div>
+      </section>
+
+      <!-- ============ APIs ============ -->
+      <section class="module" id="apis">
+        <div class="eyebrow">Foundations</div>
+        <h2 class="title">What is an API, really?</h2>
+        <p class="lead">API = Application Programming Interface. Strip the jargon: it's a <b>menu of things you're allowed to ask for, and the rules for asking.</b></p>
+
+        <div class="analogy">
+          <span class="tag">Analogy: the restaurant menu</span>
+          <p style="margin:8px 0 0">You don't walk into the kitchen and cook. You read a <b>menu</b> (the API) that lists what you can order and how to order it. You hand the waiter a structured request ("Item 12, no onions"). The kitchen (the server) does messy work you never see, and out comes a plate (the response). The menu is a <b>contract</b>: if it says "we serve pasta," you can rely on that. The API is that contract between two pieces of software.</p>
+        </div>
+
+        <h3>Endpoints: the items on the menu</h3>
+        <p>An API is made of <b>endpoints</b> — specific addresses you send requests to, each doing one job. They read like folders in a URL:</p>
+        <pre><code><span class="tok-comment"># A bank's API might expose endpoints like:</span>
+<span class="tok-url">/accounts/4471</span>            <span class="tok-comment">→ details for one account</span>
+<span class="tok-url">/accounts/4471/balance</span>    <span class="tok-comment">→ just the balance</span>
+<span class="tok-url">/accounts/4471/transactions</span> <span class="tok-comment">→ the transaction history</span>
+<span class="tok-url">/transfers</span>                <span class="tok-comment">→ where you'd POST a new money transfer</span>
+<span class="tok-url">/fx/rates?from=USD&to=INR</span>  <span class="tok-comment">→ a live exchange rate</span></code></pre>
+
+        <div class="callout"><b>PM translation:</b> when an engineer says "we need to add an endpoint," they mean "we need to build a new item on the menu — a new thing other software can ask our system to do." When they say "the endpoint is flaky," one specific item on the menu is misbehaving, not the whole system.</div>
+
+        <h3>The full address: base URL + endpoint</h3>
+        <pre><code><span class="tok-url">https://api.examplebank.com</span><span class="tok-comment">  ← base URL (which server)</span>
+<span class="tok-url">/accounts/4471/balance</span><span class="tok-comment">       ← endpoint path (what you want)</span>
+<span class="tok-str">?currency=INR</span><span class="tok-comment">                ← query parameters (options/filters)</span></code></pre>
+
+        <h3>JSON: the language of the notes</h3>
+        <p>Most modern APIs pass data as <b>JSON</b> — a simple text format of labels and values. You'll see it constantly. You don't need to write it, just read it:</p>
+        <pre><code>{
+  <span class="tok-key">"accountId"</span>: <span class="tok-str">"4471"</span>,
+  <span class="tok-key">"balance"</span>: <span class="tok-str">52300.50</span>,
+  <span class="tok-key">"currency"</span>: <span class="tok-str">"INR"</span>,
+  <span class="tok-key">"status"</span>: <span class="tok-str">"active"</span>
+}</code></pre>
+        <p>That's it — <code>"label": value</code> pairs, wrapped in braces. Curly braces <code>{}</code> = an object (one thing). Square brackets <code>[]</code> = a list of things. When a screen shows wrong data, an engineer will look at the raw JSON the server sent to see if the <em>data</em> was wrong or the <em>app's display</em> was wrong.</p>
+
+        <div class="callout good"><b>Mental model:</b> An API is a <b>contract + a menu</b>. The contract says "ask me like this, I'll answer like that." When two teams integrate, they're agreeing on an API. When something breaks at the boundary between two systems, someone broke the contract — sent the wrong shape, or changed the menu without telling the other side.</div>
+
+        <div class="footnav">
+          <button onclick="go('bigpicture')"><span class="lbl">← Previous</span> How systems talk</button>
+          <button onclick="go('anatomy')"><span class="lbl">Next →</span> Anatomy of a request</button>
+        </div>
+      </section>
+
+      <!-- ============ ANATOMY ============ -->
+      <section class="module" id="anatomy">
+        <div class="eyebrow">The Mechanics</div>
+        <h2 class="title">Anatomy of a request &amp; response</h2>
+        <p class="lead">Every note has the same four parts. Learn them once and you can read any request, in any tool, forever.</p>
+
+        <h3>A request has four parts</h3>
+        <table class="ref">
+          <tr><th>Part</th><th>What it is</th><th>Bank example</th></tr>
+          <tr><td><b>Method</b></td><td>The verb — what action you want</td><td><code>GET</code> (read), <code>POST</code> (create)</td></tr>
+          <tr><td><b>URL</b></td><td>The address — what you're acting on</td><td><code>/accounts/4471/balance</code></td></tr>
+          <tr><td><b>Headers</b></td><td>Metadata about the request — who you are, what format you speak</td><td><code>Authorization: Bearer abc123</code></td></tr>
+          <tr><td><b>Body</b></td><td>The payload — data you're sending (only for writes)</td><td><code>{ "amount": 500, "to": "8890" }</code></td></tr>
+        </table>
+
+        <div class="analogy">
+          <span class="tag">Analogy: a posted letter</span>
+          <p style="margin:8px 0 0"><b>Method</b> = what you want done (deliver / pick up). <b>URL</b> = the address on the envelope. <b>Headers</b> = the postmarks, return address, "fragile" stickers — info <em>about</em> the letter. <b>Body</b> = the actual letter inside. A GET request is often an envelope with no letter inside — you're just asking to read something.</p>
+        </div>
+
+        <h3>Headers — the part PMs underestimate</h3>
+        <p>Headers carry the stuff that decides whether your request even gets accepted. The big ones:</p>
+        <ul>
+          <li><code>Authorization</code> — proves who you are (a token/key). <b>Wrong or missing → 401.</b> The #1 cause of "it works for me but not for them."</li>
+          <li><code>Content-Type</code> — what format the body is in (usually <code>application/json</code>). Mismatch → the server can't parse your data → 400.</li>
+          <li><code>Accept</code> — what format you want back.</li>
+        </ul>
+
+        <h3>A response has parts too</h3>
+        <ul>
+          <li><b>Status code</b> — a 3-digit number saying how it went (next module — this is the single most useful thing to learn).</li>
+          <li><b>Headers</b> — metadata about the response.</li>
+          <li><b>Body</b> — the actual answer (the JSON data, or an error message).</li>
+        </ul>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Interactive: dissect a real-shaped request</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">Hover or tap each part to see what it does.</p>
+            <div id="dissect" style="font-family:var(--mono);font-size:13px;line-height:2.1">
+              <span class="diss" data-info="METHOD — the verb. POST means 'create something new'. Here: create a transfer." style="background:var(--green-soft);color:var(--green);padding:2px 6px;border-radius:5px;cursor:pointer">POST</span>
+              <span class="diss" data-info="URL — the endpoint. /transfers is where new money transfers are created." style="color:var(--accent);cursor:pointer">/transfers</span><br>
+              <span class="diss" data-info="HEADER (Authorization) — proves who you are. If this token is wrong or expired, you get a 401 Unauthorized." style="color:var(--purple);cursor:pointer">Authorization: Bearer eyJhbGc...</span><br>
+              <span class="diss" data-info="HEADER (Content-Type) — tells the server the body below is JSON. Get this wrong and the server can't read your data → 400." style="color:var(--purple);cursor:pointer">Content-Type: application/json</span><br>
+              <span class="diss" data-info="BODY — the actual data you're sending. Here, the details of the transfer you want to make." style="color:var(--yellow);cursor:pointer">{ "from": "4471", "to": "8890", "amount": 500 }</span>
+            </div>
+            <div id="dissOut" style="margin-top:14px;padding:12px;background:var(--code-bg);border-radius:8px;font-size:13.5px;color:var(--muted);min-height:44px">👆 Click a part above to learn what it is.</div>
+          </div>
+        </div>
+
+        <div class="footnav">
+          <button onclick="go('apis')"><span class="lbl">← Previous</span> What is an API</button>
+          <button onclick="go('methods')"><span class="lbl">Next →</span> HTTP methods</button>
+        </div>
+      </section>
+
+      <!-- ============ METHODS ============ -->
+      <section class="module" id="methods">
+        <div class="eyebrow">The Mechanics</div>
+        <h2 class="title">HTTP methods: the verbs</h2>
+        <p class="lead">The method is the <b>action</b> you want. There are only a handful that matter. They map almost perfectly to "read, create, update, delete."</p>
+
+        <table class="ref">
+          <tr><th>Method</th><th>Means</th><th>Bank example</th><th>Changes data?</th></tr>
+          <tr><td><span class="pill get">GET</span></td><td>Read / fetch</td><td>Get account balance</td><td>No — safe to retry</td></tr>
+          <tr><td><span class="pill post">POST</span></td><td>Create new</td><td>Make a new transfer</td><td>Yes — careful with retries</td></tr>
+          <tr><td><span class="pill put">PUT</span></td><td>Replace fully</td><td>Overwrite a saved payee</td><td>Yes</td></tr>
+          <tr><td><span class="pill put">PATCH</span></td><td>Update partially</td><td>Change just the payee's nickname</td><td>Yes</td></tr>
+          <tr><td><span class="pill delete">DELETE</span></td><td>Remove</td><td>Delete a saved card</td><td>Yes</td></tr>
+        </table>
+
+        <div class="callout danger"><b>Why this matters in incidents:</b> A failed <code>GET</code> is annoying but usually safe — nothing changed, you can retry. A failed <code>POST</code> is scary: <em>did the transfer go through or not?</em> This is why you'll hear engineers obsess over "idempotency" — making it safe to retry a POST without charging the customer twice. If a customer says "I got charged twice," this is the area to look.</div>
+
+        <div class="analogy">
+          <span class="tag">GET vs POST in one line</span>
+          <p style="margin:8px 0 0"><b>GET</b> = asking a question (no side effects — ask it a hundred times, nothing changes). <b>POST</b> = signing a form (something happens in the real world — money moves, an account is created).</p>
+        </div>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Interactive: the Bank API console</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">Pick a method and endpoint, then Send. This is a <b>simulated</b> bank API — watch how the same endpoint behaves differently depending on the method and whether you're "authenticated."</p>
+            <div class="row" style="margin-bottom:10px">
+              <div style="flex:0 0 130px">
+                <label class="fld">Method</label>
+                <select id="apiMethod">
+                  <option>GET</option><option>POST</option><option>PATCH</option><option>DELETE</option>
+                </select>
+              </div>
+              <div style="flex:1;min-width:220px">
+                <label class="fld">Endpoint</label>
+                <select id="apiEndpoint">
+                  <option value="/accounts/4471/balance">/accounts/4471/balance</option>
+                  <option value="/accounts/4471/transactions">/accounts/4471/transactions</option>
+                  <option value="/transfers">/transfers</option>
+                  <option value="/accounts/9999/balance">/accounts/9999/balance (doesn't exist)</option>
+                </select>
+              </div>
+            </div>
+            <div class="row" style="margin-bottom:10px">
+              <label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="apiAuth" checked style="width:auto"> Send a valid <code>Authorization</code> token
+              </label>
+            </div>
+            <div id="apiBodyWrap" style="display:none;margin-bottom:10px">
+              <label class="fld">Request body (JSON)</label>
+              <textarea id="apiBody">{ "from": "4471", "to": "8890", "amount": 500 }</textarea>
+            </div>
+            <button class="btn" onclick="sendApi()">▶ Send request</button>
+
+            <div class="resp-box" id="apiResp">
+              <div class="meta-row">
+                <span>Status: <b id="rStatus"></b></span>
+                <span>Time: <b id="rTime"></b></span>
+                <span>Size: <b id="rSize"></b></span>
+              </div>
+              <pre style="margin:0"><code id="rBody"></code></pre>
+              <div class="callout" id="rHint" style="margin-bottom:0;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)"><b>Things to try:</b> Send a <code>DELETE</code> to a balance (you'll get rejected — you can't delete a reading). Turn off the token and send anything (401). Ask for account 9999 (404). POST a transfer with the token off, then on.</p>
+
+        <div class="footnav">
+          <button onclick="go('anatomy')"><span class="lbl">← Previous</span> Anatomy of a request</button>
+          <button onclick="go('status')"><span class="lbl">Next →</span> Status codes</button>
+        </div>
+      </section>
+
+      <!-- ============ STATUS CODES ============ -->
+      <section class="module" id="status">
+        <div class="eyebrow">The Mechanics</div>
+        <h2 class="title">Status codes: the most useful thing you'll learn</h2>
+        <p class="lead">Every response carries a 3-digit code. The <b>first digit</b> tells you the category — and crucially, <b>whose problem it probably is.</b> Memorize the five families and you can triage almost any incident.</p>
+
+        <table class="ref">
+          <tr><th>Family</th><th>Meaning</th><th>Whose fault, usually</th></tr>
+          <tr><td><b class="s2">2xx</b></td><td>✅ Success — it worked</td><td>Nobody — celebrate</td></tr>
+          <tr><td><b class="s3">3xx</b></td><td>↪️ Redirect — "go look over there instead"</td><td>Usually fine, sometimes config</td></tr>
+          <tr><td><b class="s4">4xx</b></td><td>🙅 Client error — <b>you</b> asked wrong</td><td><b>The caller</b> (bad data, no auth, wrong URL)</td></tr>
+          <tr><td><b class="s5">5xx</b></td><td>💥 Server error — <b>they</b> broke</td><td><b>The server / backend team</b></td></tr>
+        </table>
+
+        <div class="callout"><b>The single most valuable distinction in this whole course:</b> <b class="s4">4xx = the request was bad</b> (the caller's fault — fix the request). <b class="s5">5xx = the server fell over</b> (the backend's fault — the caller did nothing wrong). When triaging: a wall of <b>4xx</b> means clients are doing something wrong (or a contract changed). A wall of <b>5xx</b> means <em>your backend is on fire</em> — page the engineers.</div>
+
+        <h3>Click any code to learn it</h3>
+        <div class="grid" id="codeGrid"></div>
+        <div class="card" id="codeDetail" style="display:none">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700" id="cdNum"></div>
+          <div style="color:var(--muted);margin-bottom:8px" id="cdName"></div>
+          <div id="cdDesc"></div>
+          <div class="callout" id="cdPm" style="margin-bottom:0"></div>
+        </div>
+
+        <div class="callout good"><b>Memory hook:</b> 200 = OK, 400 = "bad request, fix your note," 401 = "who are you?", 403 = "I know who you are, you're still not allowed," 404 = "that doesn't exist," 500 = "I broke," 503 = "I'm overwhelmed, try later." If you remember only these seven, you're ahead of most people in any incident channel.</div>
+
+        <div class="footnav">
+          <button onclick="go('methods')"><span class="lbl">← Previous</span> HTTP methods</button>
+          <button onclick="go('https')"><span class="lbl">Next →</span> HTTPS &amp; security</button>
+        </div>
+      </section>
+
+      <!-- ============ HTTPS ============ -->
+      <section class="module" id="https">
+        <div class="eyebrow">The Mechanics</div>
+        <h2 class="title">HTTPS &amp; security: what the lock actually means</h2>
+        <p class="lead">HTTP is the language. The <b>S</b> in HTTPS is the security layer wrapped around it. For a fintech product this is non-negotiable — but you only need the conceptual version.</p>
+
+        <h3>HTTP vs HTTPS</h3>
+        <ul>
+          <li><b>HTTP</b> — the notes are sent in <b>plain text</b>. Anyone between you and the server (on shared wifi, your ISP, etc.) can read them. Fine for a public webpage; catastrophic for a bank balance.</li>
+          <li><b>HTTPS</b> — the same notes, but <b>encrypted</b> in transit. Eavesdroppers see only scrambled noise. The padlock in the browser = "this connection is encrypted and the server proved it's really examplebank.com."</li>
+        </ul>
+
+        <div class="analogy">
+          <span class="tag">Analogy: postcard vs sealed armored envelope</span>
+          <p style="margin:8px 0 0">HTTP is a <b>postcard</b> — every postal worker along the way can read it. HTTPS is a <b>tamper-proof, sealed envelope</b> that only the recipient can open, <em>plus</em> a verified ID confirming the recipient is who they claim to be. For money, you always want the sealed envelope.</p>
+        </div>
+
+        <h3>What HTTPS protects (and what it doesn't)</h3>
+        <table class="ref">
+          <tr><th>HTTPS DOES</th><th>HTTPS does NOT</th></tr>
+          <tr><td>Encrypt data <b>in transit</b> (between client and server)</td><td>Protect data once it's <b>stored</b> on the server</td></tr>
+          <tr><td>Verify you're talking to the real server (via a <b>certificate</b>)</td><td>Mean the server's code is secure or bug-free</td></tr>
+          <tr><td>Stop eavesdropping &amp; tampering on the network</td><td>Replace authentication — you still need login/tokens</td></tr>
+        </table>
+
+        <h3>Three terms you'll hear in security conversations</h3>
+        <ul>
+          <li><b>Certificate (SSL/TLS cert)</b> — the server's verified ID card, issued by a trusted authority. <b class="s4">"Certificate expired"</b> is a real, common outage: the ID lapsed, so browsers refuse to trust the server and users see scary warnings. Someone forgot to renew it.</li>
+          <li><b>TLS</b> — the modern protocol that does the actual encryption (SSL is its older name; people still say "SSL" loosely).</li>
+          <li><b>Token / API key</b> — your proof of identity <em>inside</em> the encrypted channel (the <code>Authorization</code> header from earlier). HTTPS hides it from eavesdroppers; the token is what tells the server it's really you.</li>
+        </ul>
+
+        <div class="callout danger"><b>Incident you'll eventually see:</b> "Users on iOS are getting security warnings and can't log in." Two prime suspects: (1) a <b>TLS certificate expired or was misconfigured</b>, or (2) the app is somehow hitting <code>http://</code> instead of <code>https://</code> and the OS is blocking it. Both are infrastructure issues, not app-logic bugs — useful to know so you route it to the right team fast.</div>
+
+        <div class="footnav">
+          <button onclick="go('status')"><span class="lbl">← Previous</span> Status codes</button>
+          <button onclick="go('curl')"><span class="lbl">Next →</span> Reading curl</button>
+        </div>
+      </section>
+
+      <!-- ============ CURL ============ -->
+      <section class="module" id="curl">
+        <div class="eyebrow">Tools &amp; Real-time</div>
+        <h2 class="title">Reading curl (and why engineers paste it at you)</h2>
+        <p class="lead"><code>curl</code> is a command-line tool for sending a single request by hand. You won't live in it, but engineers constantly share curl commands to say "here's the exact request that's failing." Being able to <b>read</b> one is a superpower in a debugging thread.</p>
+
+        <h3>Anatomy of a curl command</h3>
+        <p>It's just the four request parts from earlier, written on one line:</p>
+        <pre><code><span class="tok-method">curl</span> <span class="tok-flag">-X</span> POST <span class="tok-comment"># the METHOD (-X = "use this method")</span>
+  <span class="tok-url">https://api.examplebank.com/transfers</span> <span class="tok-comment"># the URL</span>
+  <span class="tok-flag">-H</span> <span class="tok-str">"Authorization: Bearer abc123"</span> <span class="tok-comment"># a HEADER (-H = header)</span>
+  <span class="tok-flag">-H</span> <span class="tok-str">"Content-Type: application/json"</span> <span class="tok-comment"># another header</span>
+  <span class="tok-flag">-d</span> <span class="tok-str">'{ "from": "4471", "to": "8890", "amount": 500 }'</span> <span class="tok-comment"># the BODY (-d = data)</span></code></pre>
+
+        <table class="ref">
+          <tr><th>Flag</th><th>Means</th><th>Maps to</th></tr>
+          <tr><td><code>-X</code></td><td>The method to use</td><td>Method (GET/POST/…)</td></tr>
+          <tr><td><code>-H</code></td><td>Add a header (repeat for each)</td><td>Headers</td></tr>
+          <tr><td><code>-d</code></td><td>The data / payload to send</td><td>Body</td></tr>
+          <tr><td><code>-i</code> / <code>-v</code></td><td>Show response headers / verbose details</td><td>Debugging output</td></tr>
+        </table>
+        <div class="callout"><b>Rule of thumb:</b> no <code>-X</code> and no <code>-d</code>? It's a plain <b>GET</b> (just reading). See <code>-d</code> with a JSON blob? Something is being <b>created or changed</b> — look closely, especially for money.</div>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Interactive: build a curl command</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">Adjust the pieces and watch the curl command assemble itself. This is exactly what an engineer would hand you.</p>
+            <div class="row" style="margin-bottom:10px">
+              <div style="flex:0 0 130px"><label class="fld">Method</label>
+                <select id="curlMethod"><option>GET</option><option selected>POST</option><option>PATCH</option><option>DELETE</option></select></div>
+              <div style="flex:1;min-width:200px"><label class="fld">URL</label>
+                <input type="text" id="curlUrl" value="https://api.examplebank.com/transfers"></div>
+            </div>
+            <div class="row" style="margin-bottom:10px">
+              <label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="curlAuth" checked style="width:auto"> Include Authorization header</label>
+            </div>
+            <div style="margin-bottom:10px"><label class="fld">Body (leave blank for none)</label>
+              <input type="text" id="curlData" value='{ "from": "4471", "to": "8890", "amount": 500 }'></div>
+            <label class="fld">Generated command</label>
+            <pre style="margin:0"><code id="curlOut"></code></pre>
+            <div class="callout good" id="curlRead" style="margin-bottom:0;margin-top:12px"></div>
+          </div>
+        </div>
+
+        <div class="callout good"><b>Pro PM move:</b> in an incident, ask the engineer "can you paste the curl that reproduces it?" Then you can see the exact endpoint, whether auth was included, and what data was sent — and often spot the problem yourself (wrong account ID, missing token, malformed body).</div>
+
+        <div class="footnav">
+          <button onclick="go('https')"><span class="lbl">← Previous</span> HTTPS &amp; security</button>
+          <button onclick="go('websockets')"><span class="lbl">Next →</span> WebSockets</button>
+        </div>
+      </section>
+
+      <!-- ============ WEBSOCKETS ============ -->
+      <section class="module" id="websockets">
+        <div class="eyebrow">Tools &amp; Real-time</div>
+        <h2 class="title">WebSockets: when you need a live connection</h2>
+        <p class="lead">Normal HTTP is one question, one answer, then hang up. Great for "what's my balance." Terrible for "show me the live USD/INR rate that changes every second." That's what WebSockets are for.</p>
+
+        <h3>The core difference</h3>
+        <table class="ref">
+          <tr><th></th><th>HTTP (request/response)</th><th>WebSocket</th></tr>
+          <tr><td><b>Shape</b></td><td>Ask → answer → done. Repeat for each update.</td><td>Open one connection, leave it open, data flows both ways.</td></tr>
+          <tr><td><b>Who can talk</b></td><td>Only the client can start. Server can't push.</td><td>Either side can send anytime (server can push to you).</td></tr>
+          <tr><td><b>Good for</b></td><td>Balances, transaction history, settings — things you fetch on demand.</td><td>Live prices, trading feeds, chat, notifications, "X is typing…".</td></tr>
+        </table>
+
+        <div class="analogy">
+          <span class="tag">Analogy: letters vs a phone call</span>
+          <p style="margin:8px 0 0">HTTP is <b>mailing letters</b> — you send one, wait for the reply, send another. WebSocket is <b>a phone call you leave connected</b> — both of you can talk the moment there's something to say, no re-dialing. For a stock ticker, you don't want to mail a letter every second asking "price now? price now?" — you want the line open so the server just <em>tells</em> you the instant it changes.</p>
+        </div>
+
+        <h3>"Polling" — the workaround you'll hear about</h3>
+        <p>Before reaching for WebSockets, teams often <b>poll</b>: the app re-sends a normal HTTP request every few seconds asking "anything new?" It's simpler but wasteful (lots of "nope, nothing" replies) and laggy. If a PM asks "why is our price feed 5 seconds behind?" — the answer is often "we're polling every 5s; we'd need WebSockets for real-time."</p>
+
+        <div class="demo">
+          <div class="demo-head"><span class="conn-dot off" id="wsDot"></span> <span id="wsStatus">Live FX feed — disconnected</span></div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">A simulated live USD/INR rate feed. With HTTP you'd refresh manually; here the "server" pushes a new price whenever it moves. Connect and watch it stream.</p>
+            <div class="row" style="margin-bottom:12px">
+              <button class="btn" id="wsConnect" onclick="wsConnect()">🔌 Open connection</button>
+              <button class="btn ghost" id="wsDisconnect" onclick="wsDisconnect()" disabled>Disconnect</button>
+              <div style="margin-left:auto;font-family:var(--mono);font-size:22px;font-weight:700" id="wsPrice">—</div>
+            </div>
+            <div class="ws-feed" id="wsFeed"><div class="ws-msg t">Connection closed. Press "Open connection" to start the live feed.</div></div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)"><b>Notice:</b> once connected, <em>you never ask again</em> — the prices just arrive. That push-without-asking is the whole point of WebSockets.</p>
+
+        <div class="callout danger"><b>How WebSockets break (and what you'll hear):</b> "The feed froze" usually means the <b>connection dropped silently</b> and didn't reconnect — common on flaky mobile networks or after the phone sleeps. A robust client should auto-reconnect; if it doesn't, the screen shows stale prices with no error. So "frozen, but no error message" is a classic WebSocket signature — different from HTTP, which fails loudly with a status code.</div>
+
+        <div class="footnav">
+          <button onclick="go('curl')"><span class="lbl">← Previous</span> Reading curl</button>
+          <button onclick="go('webhooks')"><span class="lbl">Next →</span> Webhooks</button>
+        </div>
+      </section>
+
+      <!-- ============ WEBHOOKS ============ -->
+      <section class="module" id="webhooks">
+        <div class="eyebrow">Tools &amp; Real-time</div>
+        <h2 class="title">Webhooks: when the API calls <em>you</em></h2>
+        <p class="lead">Everything so far has been your system asking someone else's system. A <b>webhook flips the direction</b>: another system sends <em>your</em> server an HTTP request the moment something happens. It's how payment gateways tell you "the payment just succeeded."</p>
+
+        <h3>The core idea</h3>
+        <p>A webhook is just a normal <b>POST request</b> — same method, headers, JSON body you already know. The only new thing is <b>who sends it</b>: instead of you calling their API, you give them a URL on <em>your</em> server (e.g. <code>/webhooks/payments</code>), and they call it whenever an event happens.</p>
+
+        <div class="analogy">
+          <span class="tag">Analogy: stop calling the courier — give them your doorbell</span>
+          <p style="margin:8px 0 0"><b>Polling</b> is phoning the courier company every five minutes: "Has my package arrived yet? …Now? …Now?" A <b>webhook</b> is giving the courier your address and letting them <b>ring your doorbell</b> when the package actually shows up. You do nothing until the bell rings. The catch: if your doorbell is broken (your server is down), the courier may leave — and you'll never know they came.</p>
+        </div>
+
+        <h3>Webhook vs API call vs WebSocket</h3>
+        <table class="ref">
+          <tr><th></th><th>API call</th><th>WebSocket</th><th>Webhook</th></tr>
+          <tr><td><b>Direction</b></td><td>You → them, you ask</td><td>Open pipe, both ways</td><td><b>Them → you</b>, they call your URL</td></tr>
+          <tr><td><b>When</b></td><td>Whenever you want data</td><td>Continuous stream</td><td>Only when an <b>event</b> happens</td></tr>
+          <tr><td><b>Good for</b></td><td>Fetching on demand</td><td>Live feeds (prices, chat)</td><td>Notifications between servers: payment settled, KYC approved, refund processed</td></tr>
+          <tr><td><b>Bank example</b></td><td>GET the balance</td><td>Streaming USD/INR ticks</td><td>Razorpay/Stripe POSTs "payment.captured" to your server</td></tr>
+        </table>
+
+        <div class="callout"><b>PM translation:</b> when an engineer says "we'll listen for the webhook," they mean: <em>we won't keep asking the gateway if the payment cleared — the gateway will tell our server the instant it does.</em> Checkout flows, subscription renewals, KYC status, chargebacks — in fintech, webhooks carry most of the "something just happened" traffic between companies.</div>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Interactive: receive a payment webhook</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">You run a checkout product. The payment gateway (their server) sends a webhook to <b>your server</b> at <code>POST /webhooks/payments</code> whenever a customer pays. Trigger a payment and watch the webhook arrive. Then take your server down and see what happens to deliveries.</p>
+            <div class="row" style="margin-bottom:12px">
+              <button class="btn" onclick="whPay()">💳 Customer pays ₹500</button>
+              <label style="font-size:13px;display:flex;align-items:center;gap:8px;cursor:pointer">
+                <input type="checkbox" id="whDown" style="width:auto"> Your server is <b>down</b> (returns 500)
+              </label>
+            </div>
+            <div class="row" style="gap:16px;align-items:stretch">
+              <div style="flex:1;min-width:240px">
+                <label class="fld">🏦 Payment gateway (their server)</label>
+                <div class="ws-feed" id="whGateway" style="height:220px"><div class="ws-msg t">Waiting for a payment…</div></div>
+              </div>
+              <div style="flex:1;min-width:240px">
+                <label class="fld">🖥️ Your server — POST /webhooks/payments</label>
+                <div class="ws-feed" id="whServer" style="height:220px"><div class="ws-msg t">Listening…</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)"><b>Things to try:</b> Trigger a payment normally (delivered, you reply 200). Then tick "server is down" and pay again — watch the gateway <b>retry with backoff</b>, and finally give up. Untick the box mid-retries to "recover" and catch the delivery.</p>
+
+        <h3>How webhooks fail — the PM checklist</h3>
+        <ul>
+          <li><b>Missed deliveries.</b> Your server was down when the webhook fired. Good senders retry (1 min, 5 min, 30 min…); bad ones don't. Classic symptom: <em>"payment succeeded at the gateway, but the order is stuck at 'processing' on our side."</em></li>
+          <li><b>Duplicate deliveries.</b> Retries mean the <em>same event can arrive twice</em>. Your side must handle a repeat without double-shipping the order — the same <b>idempotency</b> idea from the methods module, now on the receiving end.</li>
+          <li><b>No ordering guarantee.</b> "payment.captured" can arrive <em>before</em> "payment.created." Code that assumes order breaks in weird ways.</li>
+          <li><b>Anyone can POST to a URL.</b> If your endpoint blindly trusts whatever arrives, an attacker can fake a "payment succeeded" event. That's why webhooks carry a <b>signature</b> (a header proving the gateway really sent it) that your server must verify.</li>
+        </ul>
+
+        <div class="callout danger"><b>Incident you'll eventually see:</b> "Customers paid but their orders never activated." First questions: <em>Did the gateway send the webhook (check their dashboard — good providers show delivery logs)? Did our endpoint return 200 or error out? Are the retries exhausted? Can we replay the missed events?</em> "Replay the webhooks" is a magic phrase worth knowing — most gateways can re-send past events.</div>
+
+        <div class="callout good"><b>Mental model:</b> an API call is <em>you asking</em>; a webhook is <em>being told</em>. Both are the same HTTP notes you've already learned to read — only the arrow is reversed. And because the sender can't show an error on <em>your</em> screen, webhook failures are silent by default: the money moved, but nobody told your system.</div>
+
+        <div class="footnav">
+          <button onclick="go('websockets')"><span class="lbl">← Previous</span> WebSockets</button>
+          <button onclick="go('live')"><span class="lbl">Next →</span> Go live: a real request</button>
+        </div>
+      </section>
+
+      <!-- ============ GO LIVE ============ -->
+      <section class="module" id="live">
+        <div class="eyebrow">The Real Thing</div>
+        <h2 class="title">Go live: send a real API request</h2>
+        <p class="lead">Every demo so far was simulated. <b>This module is not.</b> Three rounds, all real: a GET to GitHub, a GET with query parameters to a weather API, and your first real POST. Every button here sends actual HTTP across the actual internet. Same anatomy you've been studying, zero simulation.</p>
+
+        <div class="callout"><b>Why GitHub?</b> It's a public, free API that needs no signup or token for public data — perfect for a first real call. The request is a plain <code>GET</code> (read-only, changes nothing, sends nothing about you beyond a normal web request). You could paste the same URL into a browser tab and see the raw JSON.</div>
+
+        <h3>Round 1: GET — ask GitHub about a repo</h3>
+        <pre><code><span class="tok-method">curl</span> <span class="tok-url">https://api.github.com/repos/<span id="liveUrlRepo">facebook/react</span></span>  <span class="tok-comment"># plain GET — no -X, no -d</span></code></pre>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span> LIVE — this leaves your machine</div>
+          <div class="demo-body">
+            <div class="row" style="margin-bottom:10px">
+              <div style="flex:1;min-width:220px">
+                <label class="fld">Repository (owner/repo)</label>
+                <input type="text" id="liveRepo" value="facebook/react">
+              </div>
+              <div style="flex:0 0 auto;align-self:flex-end">
+                <button class="btn" id="liveBtn" onclick="sendLive()">🚀 Send real request</button>
+              </div>
+            </div>
+            <div class="row" style="margin-bottom:4px;gap:8px">
+              <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="livePreset('facebook/react')">facebook/react</button>
+              <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="livePreset('torvalds/linux')">torvalds/linux</button>
+              <button class="btn ghost" style="padding:6px 12px;font-size:12px" onclick="livePreset('facebook/reactt')">facebook/reactt (typo — get a real 404)</button>
+            </div>
+
+            <div class="resp-box" id="liveResp">
+              <div class="meta-row">
+                <span>Status: <b id="lvStatus"></b></span>
+                <span>Time: <b id="lvTime"></b></span>
+                <span>Rate limit left: <b id="lvRate"></b></span>
+              </div>
+              <div id="lvHighlights"></div>
+              <label class="fld" style="margin-top:10px">Raw response body (real JSON from GitHub's server)</label>
+              <pre style="margin:0;max-height:260px;overflow:auto"><code id="lvBody"></code></pre>
+              <div class="callout" id="lvHint" style="margin-bottom:0;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+
+        <h3>Now catch it in the act</h3>
+        <div class="card">
+          <ol style="margin:0">
+            <li>Open the <b>Network tab</b> right now (right-click → Inspect → Network).</li>
+            <li>Click <b>Send real request</b> again.</li>
+            <li>Watch a row appear for <code>api.github.com</code> — <b>that's your request, for real</b>. Click it: see the method, the status code, the response headers, the JSON body. Everything from this course, live in front of you.</li>
+            <li>Now send the <b>typo preset</b> and watch a genuine red <b class="s4">404</b> appear in the Network tab.</li>
+          </ol>
+        </div>
+
+        <div class="callout good"><b>The aha to take away:</b> the simulated consoles and this real request look identical — because there's nothing else to an API call. A verb, an address, some headers, a JSON reply, a status code. You've now sent one across the real internet and inspected it with real tools. That's the whole game.</div>
+
+        <h3>Round 2: GET with query parameters — live weather</h3>
+        <p>Remember query parameters from the "What is an API" module — the <code>?key=value</code> options at the end of a URL? Here they are doing real work. <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a> is a free weather API (no key needed): you pass a latitude and longitude as query params, and it returns the current weather there.</p>
+        <pre><code><span class="tok-method">curl</span> <span class="tok-url">https://api.open-meteo.com/v1/forecast</span><span class="tok-str">?latitude=<span id="wxLat">19.08</span>&amp;longitude=<span id="wxLon">72.88</span>&amp;current_weather=true</span>
+<span class="tok-comment"># the URL says WHERE to ask; the query params say WHAT you want — no body, no auth</span></code></pre>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span> LIVE — real weather, right now</div>
+          <div class="demo-body">
+            <div class="row" style="margin-bottom:10px">
+              <div style="flex:1;min-width:200px">
+                <label class="fld">City (sets the lat/lon query params)</label>
+                <select id="wxCity">
+                  <option value="19.0760,72.8777">Mumbai</option>
+                  <option value="28.6139,77.2090">Delhi</option>
+                  <option value="12.9716,77.5946">Bengaluru</option>
+                  <option value="51.5072,-0.1276">London</option>
+                  <option value="40.7128,-74.0060">New York</option>
+                  <option value="35.6762,139.6503">Tokyo</option>
+                </select>
+              </div>
+              <div style="flex:0 0 auto;align-self:flex-end">
+                <button class="btn" id="wxBtn" onclick="sendWeather()">🌦️ Get live weather</button>
+              </div>
+            </div>
+            <div class="resp-box" id="wxResp">
+              <div class="meta-row">
+                <span>Status: <b id="wxStatus"></b></span>
+                <span>Time: <b id="wxTime"></b></span>
+              </div>
+              <div id="wxHighlights"></div>
+              <label class="fld" style="margin-top:10px">Raw response body</label>
+              <pre style="margin:0;max-height:200px;overflow:auto"><code id="wxBody"></code></pre>
+              <div class="callout good" id="wxHint" style="margin-bottom:0;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)"><b>Notice:</b> switch cities and only the <b>query parameters</b> change — same endpoint, different answer. That's what params are for: one menu item, many variations. This is also a different <em>company's</em> server than Round 1 — same rules, same shapes, because HTTP is universal.</p>
+
+        <h3>Round 3: your first real POST</h3>
+        <p>GETs are safe — you've just been reading. A <b>POST creates something</b>, which is why we can't practice on a real bank. Instead we'll use <a href="https://jsonplaceholder.typicode.com" target="_blank" rel="noopener">JSONPlaceholder</a> — a public <b>practice API built exactly for this</b>. It behaves like a real server (validates nothing about you, replies with a genuine <code>201 Created</code> and assigns your new resource an ID) but doesn't permanently store anything, so it's safe to hammer.</p>
+
+        <div class="demo">
+          <div class="demo-head"><span class="dot" style="background:var(--orange);box-shadow:0 0 8px var(--orange)"></span> LIVE — POST /posts (a create, for real)</div>
+          <div class="demo-body">
+            <p style="margin-top:0;font-size:14px;color:var(--muted)">Edit the JSON body if you like, then send. This is the full write anatomy from the course: <span class="pill post">POST</span> + <code>Content-Type: application/json</code> header + a body.</p>
+            <div style="margin-bottom:10px">
+              <label class="fld">Request body (JSON — the note you're sending)</label>
+              <textarea id="postBody">{ "title": "My first real POST", "body": "sent from the API crash course", "userId": 49 }</textarea>
+            </div>
+            <button class="btn" id="postBtn" onclick="sendPost()">🚀 Send real POST</button>
+            <div class="resp-box" id="postResp">
+              <div class="meta-row">
+                <span>Status: <b id="postStatus"></b></span>
+                <span>Time: <b id="postTime"></b></span>
+              </div>
+              <label class="fld">Raw response body (what the server created)</label>
+              <pre style="margin:0;max-height:200px;overflow:auto"><code id="postBodyOut"></code></pre>
+              <div class="callout" id="postHint" style="margin-bottom:0;margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)"><b>Things to try:</b> Send it and note the <b class="s2">201 Created</b> (not 200) and the <code>id</code> the server assigned. Send it again — you get a <em>new</em> creation each time, which is exactly why retrying a POST on a money endpoint is scary. Then break the JSON on purpose (delete a quote) and send — see what happens to a malformed body.</p>
+
+        <h3>Keep going (5-minute homework)</h3>
+        <ul>
+          <li>Paste <code>https://api.github.com/repos/facebook/react</code> into a <b>browser tab</b> — that address bar visit is a GET request too.</li>
+          <li>Try other real public reads: <code>api.github.com/users/&lt;any-username&gt;</code>, or swap in any public repo above.</li>
+          <li>Click "Send" ~60 times fast and you may meet a <b>real 403/429 rate limit</b> — GitHub allows 60 unauthenticated requests per hour per IP. Check the "Rate limit left" counter above as you go. That's the 429 module happening to you in real life.</li>
+          <li>Open the Network tab on any site you use daily (your bank, a news site), reload, and just <b>read the rows</b>. You'll be surprised how much you now understand.</li>
+        </ul>
+
+        <div class="footnav">
+          <button onclick="go('webhooks')"><span class="lbl">← Previous</span> Webhooks</button>
+          <button onclick="go('debug')"><span class="lbl">Next →</span> Troubleshooting playbook</button>
+        </div>
+      </section>
+
+      <!-- ============ DEBUG ============ -->
+      <section class="module" id="debug">
+        <div class="eyebrow">When It Breaks</div>
+        <h2 class="title">The troubleshooting playbook</h2>
+        <p class="lead">When something's broken, you don't need to fix it — you need to <b>localize it</b> and route it. Here's the decision tree that gets you 80% of the way in any incident.</p>
+
+        <h3>Step 1: Did the request even leave?</h3>
+        <p>Open the Network tab (next module). If you see <b>no request at all</b>, the bug is in the app/frontend — a button isn't wired up, a condition is wrong. The backend is innocent.</p>
+
+        <h3>Step 2: If it left, what came back?</h3>
+        <div class="card" style="margin-top:10px">
+          <div class="status-line"><b class="s2">2xx</b> → it succeeded. If the screen is still wrong, the bug is in <b>how the app displays</b> the data, not the API. Check the response body vs what's shown.</div>
+          <div class="status-line"><b class="s4">401 / 403</b> → <b>auth problem</b>. Token missing, expired, or insufficient permissions. Extremely common. Route to: whoever owns login/sessions.</div>
+          <div class="status-line"><b class="s4">404</b> → wrong URL or the thing genuinely doesn't exist. Check the endpoint and the ID (e.g. typo'd account number).</div>
+          <div class="status-line"><b class="s4">400 / 422</b> → <b>bad data in the request</b>. The body is malformed or missing a required field. Often a contract mismatch after a change.</div>
+          <div class="status-line"><b class="s4">429</b> → <b>rate limited</b>. Too many requests too fast. The system is protecting itself. Back off / batch.</div>
+          <div class="status-line"><b class="s5">500 / 502 / 503</b> → <b>the server broke or is overwhelmed</b>. Not the caller's fault. Page the backend team — this is the "wake people up" category.</div>
+          <div class="status-line"><b>No response / timeout</b> → network issue, server unreachable, or it's hung. Could be DNS, firewall, or the server is down entirely.</div>
+        </div>
+
+        <h3>Step 3: The three flavors of "broken"</h3>
+        <table class="ref">
+          <tr><th>Symptom</th><th>Likely category</th><th>First question to ask</th></tr>
+          <tr><td>It's <b>slow</b> but works</td><td>Performance — server slow, or polling, or big payloads</td><td>"How long does the request take in the Network tab?"</td></tr>
+          <tr><td>It's <b>rejected</b> (4xx)</td><td>The caller sent something wrong</td><td>"What's in the request — auth, body, URL?"</td></tr>
+          <tr><td>It <b>errors</b> (5xx) or times out</td><td>The server/backend is failing</td><td>"Is this happening for everyone, and when did it start?"</td></tr>
+        </table>
+
+        <h3>The questions that make you sound like you know your stuff</h3>
+        <div class="card">
+          <ul style="margin:0">
+            <li>"What <b>status code</b> are we seeing?" — instantly narrows fault to client vs server.</li>
+            <li>"Is it <b>all users or some</b>?" — all = systemic (deploy, outage); some = data/account-specific or regional.</li>
+            <li>"<b>When did it start</b>, and did anything ship around then?" — most incidents trace to a recent change.</li>
+            <li>"Can you paste the <b>curl</b> that reproduces it?" — gives you the exact failing request.</li>
+            <li>"Is it the <b>request</b> being rejected or the <b>response</b> being wrong?" — separates 'won't go through' from 'wrong data.'"</li>
+          </ul>
+        </div>
+
+        <div class="callout good"><b>Your job isn't to fix it — it's to localize and route.</b> "We're seeing 503s across all users starting at 14:20, right after the payments deploy" is a sentence that gets the right people moving in seconds. That's the whole skill.</div>
+
+        <div class="footnav">
+          <button onclick="go('live')"><span class="lbl">← Previous</span> Go live: a real request</button>
+          <button onclick="go('devtools')"><span class="lbl">Next →</span> Where to look</button>
+        </div>
+      </section>
+
+      <!-- ============ DEVTOOLS ============ -->
+      <section class="module" id="devtools">
+        <div class="eyebrow">When It Breaks</div>
+        <h2 class="title">Where to look: the Network tab</h2>
+        <p class="lead">Your browser has a built-in window into every request it makes. You already have it. Learning to open it and read it is the most practical skill in this course.</p>
+
+        <h3>Opening it (do this now on any website)</h3>
+        <ul>
+          <li><b>Chrome / Edge:</b> right-click → <b>Inspect</b> → click the <b>Network</b> tab. Or <code>Cmd+Option+I</code> (Mac) / <code>F12</code> (Windows).</li>
+          <li><b>Safari:</b> enable the Develop menu (Settings → Advanced → "Show features for web developers"), then <code>Cmd+Option+I</code> → Network.</li>
+          <li>Then <b>reload the page</b> or click around — you'll see every request stream in as rows.</li>
+        </ul>
+
+        <h3>Reading the rows — a simulated Network tab</h3>
+        <p>This is what you'd see. Click any row to inspect it, just like the real thing.</p>
+        <div class="demo">
+          <div class="demo-head"><span class="dot"></span> Network — examplebank.com</div>
+          <div class="demo-body" style="padding:0">
+            <table class="ref" style="margin:0;font-family:var(--mono);font-size:12.5px">
+              <thead><tr style="border-bottom:1px solid var(--border)">
+                <th style="padding-left:18px">Name</th><th>Method</th><th>Status</th><th>Type</th><th>Time</th>
+              </tr></thead>
+              <tbody id="netRows"></tbody>
+            </table>
+            <div id="netDetail" style="display:none;border-top:1px solid var(--border);padding:16px 18px;background:var(--code-bg)"></div>
+          </div>
+        </div>
+        <p style="font-size:14px;color:var(--muted)">The green row is healthy. The orange and red ones are the kind you'll hunt for in an incident — click them to see what's wrong and what you'd do.</p>
+
+        <h3>What to actually click on, in order</h3>
+        <ol>
+          <li><b>Status column</b> — scan for anything not in the 200s. Red/orange = your suspects.</li>
+          <li><b>The failing request → Headers</b> — was the <code>Authorization</code> header there? Right URL?</li>
+          <li><b>→ Payload / Request</b> — what data did we send? (catch wrong account IDs, missing fields)</li>
+          <li><b>→ Response / Preview</b> — what did the server actually say? Error messages live here.</li>
+          <li><b>Time column</b> — anything taking seconds is a performance suspect.</li>
+        </ol>
+
+        <div class="callout"><b>One more place to look — the Console tab.</b> Right next to Network. Red text there = JavaScript errors in the app itself (frontend bugs). If the Network tab shows all 200s but the page is broken, the Console usually has the answer. Two tabs, two halves of the story: <b>Network = the conversation with the server, Console = the app talking to itself.</b></p></div>
+
+        <div class="callout good"><b>Try it for real right now:</b> open the Network tab on this very page, then go to the WebSockets module and hit "Open connection" — though note our demos are simulated in-page, so on a real app you'd see the actual request rows. The muscle memory of <em>open tab → reload → scan status column</em> is what you're building.</div>
+
+        <div class="footnav">
+          <button onclick="go('debug')"><span class="lbl">← Previous</span> Troubleshooting playbook</button>
+          <button onclick="go('quiz')"><span class="lbl">Next →</span> Test yourself</button>
+        </div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="module" id="quiz">
+        <div class="eyebrow">When It Breaks</div>
+        <h2 class="title">Test yourself</h2>
+        <p class="lead">Scenario-based, the way these show up at work. Pick an answer to see the explanation. No grades — this is to make the concepts stick.</p>
+        <div id="quizHost"></div>
+        <div class="card" id="quizScore" style="display:none;text-align:center">
+          <div style="font-size:28px;font-weight:700" id="quizScoreNum"></div>
+          <div style="color:var(--muted)" id="quizScoreMsg"></div>
+          <button class="btn ghost" style="margin-top:12px" onclick="resetQuiz()">Try again</button>
+        </div>
+
+        <div class="footnav">
+          <button onclick="go('devtools')"><span class="lbl">← Previous</span> Where to look</button>
+          <button onclick="go('glossary')"><span class="lbl">Next →</span> Glossary</button>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="module" id="glossary">
+        <div class="eyebrow">Reference</div>
+        <h2 class="title">Glossary — the cheat sheet</h2>
+        <p class="lead">Everything in one place. Bookmark this module; it's your quick reference for the next incident channel.</p>
+
+        <div style="margin-bottom:16px">
+          <input type="text" id="glossSearch" placeholder="🔎 Filter terms…" oninput="filterGloss()" style="font-family:var(--sans)">
+        </div>
+        <div id="glossList"></div>
+
+        <div class="card" style="margin-top:30px;text-align:center">
+          <h4 style="margin-top:0">🎉 That's the whole course.</h4>
+          <p style="color:var(--muted);margin-bottom:0">You now know enough to read the conversation between systems, recognize failure signatures by their status codes, and open the Network tab to find the broken step. That's genuinely most of what a PM needs. Revisit the demos anytime — they're all simulated and free to replay.</p>
+        </div>
+
+        <div class="footnav">
+          <button onclick="go('devtools')"><span class="lbl">← Previous</span> Where to look</button>
+          <button onclick="go('intro')"><span class="lbl">↺ Back to</span> Start here</button>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+/* ---------- Navigation ---------- */
+const modules = ["intro","bigpicture","apis","anatomy","methods","status","https","curl","websockets","webhooks","live","debug","devtools","quiz","glossary"];
+const visited = new Set(["intro"]);
+function go(id){
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  document.querySelectorAll('#nav a').forEach(a=>a.classList.toggle('active', a.dataset.target===id));
+  visited.add(id);
+  updateProgress();
+  window.scrollTo({top:0,behavior:'instant'});
+  document.getElementById('sidebar').classList.remove('open');
+}
+document.querySelectorAll('#nav a').forEach(a=>a.addEventListener('click',()=>go(a.dataset.target)));
+function updateProgress(){
+  document.getElementById('progFill').style.width = (visited.size/modules.length*100)+'%';
+}
+document.getElementById('hamburger').addEventListener('click',()=>document.getElementById('sidebar').classList.toggle('open'));
+updateProgress();
+
+/* ---------- Request cycle animation ---------- */
+function playCycle(){
+  const stage = document.getElementById('cycleStage');
+  const steps = [
+    '📱 <b>Your banking app</b> (client): "GET /accounts/4471/balance" — sending…',
+    '🌐 Request travelling across the network →→→',
+    '🏦 <b>Bank server</b> received it. Checking your token… looking up the balance…',
+    '🏦 <b>Bank server</b>: responds <span class="s2">200 OK</span> with <code>{ "balance": 52300.50 }</code>',
+    '🌐 Response travelling back ←←←',
+    '📱 <b>Your app</b> shows: <b>Balance: ₹52,300.50</b> ✅'
+  ];
+  stage.innerHTML = '';
+  steps.forEach((s,i)=>{
+    setTimeout(()=>{
+      const d=document.createElement('div');
+      d.innerHTML = s; d.style.opacity=0; d.style.transition='opacity .3s';
+      stage.appendChild(d);
+      requestAnimationFrame(()=>d.style.opacity=1);
+      stage.scrollTop = stage.scrollHeight;
+    }, i*750);
+  });
+}
+
+/* ---------- Dissect request ---------- */
+document.querySelectorAll('.diss').forEach(el=>{
+  el.addEventListener('click',()=>{
+    document.getElementById('dissOut').innerHTML = el.dataset.info;
+  });
+});
+
+/* ---------- Bank API console ---------- */
+const apiMethod = document.getElementById('apiMethod');
+const apiEndpoint = document.getElementById('apiEndpoint');
+function toggleBody(){
+  document.getElementById('apiBodyWrap').style.display =
+    (apiMethod.value==='POST'||apiMethod.value==='PATCH') ? 'block':'none';
+}
+apiMethod.addEventListener('change',toggleBody);
+toggleBody();
+
+function sendApi(){
+  const m = apiMethod.value, ep = apiEndpoint.value, auth = document.getElementById('apiAuth').checked;
+  let status, body, hint, hintClass='';
+  const exists = !ep.includes('9999');
+
+  if(!auth){
+    status='401 Unauthorized';
+    body={error:"missing_token", message:"No valid Authorization header was provided."};
+    hint='🔑 <b>401</b> — the server has no idea who you are. The <code>Authorization</code> token was missing. This is the #1 cause of "works for me, not for them." Fix: include a valid token.';
+    hintClass='danger';
+  } else if(!exists){
+    status='404 Not Found';
+    body={error:"not_found", message:"Account 9999 does not exist."};
+    hint='🔍 <b>404</b> — the server is fine, but what you asked for isn\'t there. Usually a typo in the ID or a wrong URL. Fix: check the account number / endpoint path.';
+    hintClass='danger';
+  } else if((m==='DELETE'||m==='PATCH') && ep.includes('/balance')){
+    status='405 Method Not Allowed';
+    body={error:"method_not_allowed", message:"You can read a balance (GET) but not "+m+" it."};
+    hint='🚫 <b>405</b> — right address, wrong verb. A balance is read-only; you can\'t '+m+' it. The menu doesn\'t offer that action on this item.';
+    hintClass='danger';
+  } else if((m==='DELETE') && ep.includes('transactions')){
+    status='405 Method Not Allowed';
+    body={error:"method_not_allowed", message:"Transaction history cannot be deleted via the API."};
+    hint='🚫 <b>405</b> — you can read transactions but not delete them. Right resource, disallowed verb.';
+    hintClass='danger';
+  } else if(m==='POST' && ep==='/transfers'){
+    let amt=0; try{amt=JSON.parse(document.getElementById('apiBody').value).amount;}catch(e){
+      status='400 Bad Request';
+      body={error:"invalid_json", message:"The request body is not valid JSON."};
+      hint='⚠️ <b>400</b> — the server couldn\'t even read your body; the JSON is malformed (a missing quote or comma). Fix the request payload.';
+      hintClass='danger';
+      return showApi(status,body,hint,hintClass);
+    }
+    if(amt>100000){
+      status='422 Unprocessable Entity';
+      body={error:"limit_exceeded", message:"Transfer of "+amt+" exceeds the daily limit of 100000."};
+      hint='⛔ <b>422</b> — the request was well-formed, but breaks a business rule (over the transfer limit). The data made sense to the parser but not to the bank. Fix: lower the amount.';
+      hintClass='danger';
+    } else {
+      status='201 Created';
+      body={transferId:"txn_8842", from:"4471", to:"8890", amount:amt, status:"completed"};
+      hint='✅ <b>201 Created</b> — POST succeeded and a new transfer now exists (note: 201, not 200 — "I made the thing"). The response gives you the new transfer\'s ID to track it.';
+      hintClass='good';
+    }
+  } else if(m==='POST'){
+    status='405 Method Not Allowed';
+    body={error:"method_not_allowed", message:"You can\'t POST to "+ep+"."};
+    hint='🚫 <b>405</b> — POST means "create new," but '+ep+' is something you read. Try POST /transfers instead.';
+    hintClass='danger';
+  } else { // GET success
+    status='200 OK';
+    if(ep.includes('/balance')) body={accountId:"4471", balance:52300.50, currency:"INR", status:"active"};
+    else if(ep.includes('transactions')) body=[{id:"t1",amount:-1200,desc:"Coffee Co"},{id:"t2",amount:50000,desc:"Salary"}];
+    else body={message:"ok"};
+    hint='✅ <b>200 OK</b> — a clean read. The server understood you, you were allowed, and here\'s the data. If the screen still looks wrong, the bug is in how the app displays this — not the API.';
+    hintClass='good';
+  }
+  showApi(status,body,hint,hintClass);
+}
+function showApi(status,body,hint,hintClass){
+  const box=document.getElementById('apiResp'); box.classList.add('show');
+  const sEl=document.getElementById('rStatus');
+  sEl.textContent=status;
+  sEl.className = status[0]==='2'?'s2':status[0]==='3'?'s3':status[0]==='4'?'s4':'s5';
+  document.getElementById('rTime').textContent=(40+Math.floor(performance.now()%200))+' ms';
+  const json=JSON.stringify(body,null,2);
+  document.getElementById('rSize').textContent=json.length+' B';
+  document.getElementById('rBody').textContent=json;
+  const h=document.getElementById('rHint'); h.innerHTML=hint; h.className='callout '+hintClass;
+}
+
+/* ---------- Status code grid ---------- */
+const codes=[
+  {n:"200",nm:"OK",fam:2,d:"The request succeeded and here's your data. The default 'all good' for a GET.",pm:"Nothing to do. If the screen is still wrong with a 200, the bug is in the app's display logic, not the API."},
+  {n:"201",nm:"Created",fam:2,d:"Success, and a new resource was created as a result (e.g. a transfer, a new account).",pm:"You'll see this after a successful POST. The response usually includes the ID of the thing you just created."},
+  {n:"204",nm:"No Content",fam:2,d:"Success, but there's nothing to send back (common after a DELETE).",pm:"Don't panic at an empty body — 204 means 'done, nothing to show.'"},
+  {n:"301/302",nm:"Redirect",fam:3,d:"The thing moved; go to this other URL instead. Browsers follow automatically.",pm:"Usually invisible. If you see redirect loops, it's a config issue."},
+  {n:"400",nm:"Bad Request",fam:4,d:"The server couldn't understand the request — malformed body, missing required field, bad syntax.",pm:"The CALLER sent garbage. Check the request body. Often appears after a contract change broke the agreed shape."},
+  {n:"401",nm:"Unauthorized",fam:4,d:"You're not authenticated — no valid credentials/token provided. 'Who are you?'",pm:"The #1 culprit. Token missing or expired. Classic 'works for me, fails for them.' Route to auth/session owners."},
+  {n:"403",nm:"Forbidden",fam:4,d:"We know who you are, but you're not allowed to do this. 'You, specifically, no.'",pm:"Different from 401! Identity is fine; PERMISSIONS are not. A user trying to access another's account, e.g."},
+  {n:"404",nm:"Not Found",fam:4,d:"That resource doesn't exist (or the URL is wrong).",pm:"Check for typos in the ID or endpoint path. The server is healthy; the address is just wrong."},
+  {n:"405",nm:"Method Not Allowed",fam:4,d:"Right URL, wrong verb (e.g. trying to DELETE something read-only).",pm:"The action isn't offered on this resource. You used POST where only GET is allowed, etc."},
+  {n:"422",nm:"Unprocessable",fam:4,d:"Well-formed request, but it breaks a business rule (over a limit, invalid state).",pm:"The data parsed fine but the bank said no (e.g. transfer over the daily limit). It's a rules violation, not a syntax error."},
+  {n:"429",nm:"Too Many Requests",fam:4,d:"Rate limited — you're sending requests too fast and got throttled.",pm:"The system is protecting itself. Back off, batch, or slow down. Common with aggressive polling or loops."},
+  {n:"500",nm:"Internal Server Error",fam:5,d:"Something blew up inside the server. A generic 'we crashed.'",pm:"NOT the caller's fault. The backend has a bug or unhandled error. This is the 'page the engineers' category."},
+  {n:"502",nm:"Bad Gateway",fam:5,d:"One server got a broken reply from another server it depends on.",pm:"A backend dependency is failing. Often a downstream service or proxy is down. Infra/backend issue."},
+  {n:"503",nm:"Service Unavailable",fam:5,d:"The server is overloaded or down for maintenance — temporarily can't handle it.",pm:"Capacity or outage. A wall of 503s = your service is overwhelmed or down. Wake people up; often follows a traffic spike or bad deploy."},
+  {n:"504",nm:"Gateway Timeout",fam:5,d:"A server waited too long for another server and gave up.",pm:"Something downstream is too slow. Performance/timeout problem deeper in the stack."}
+];
+const grid=document.getElementById('codeGrid');
+codes.forEach(c=>{
+  const d=document.createElement('div'); d.className='scode';
+  const cl=c.fam===2?'s2':c.fam===3?'s3':c.fam===4?'s4':'s5';
+  d.innerHTML=`<div class="num ${cl}">${c.n}</div><div class="nm">${c.nm}</div>`;
+  d.addEventListener('click',()=>{
+    document.querySelectorAll('.scode').forEach(s=>s.classList.remove('act')); d.classList.add('act');
+    const det=document.getElementById('codeDetail'); det.style.display='block';
+    document.getElementById('cdNum').textContent=c.n; document.getElementById('cdNum').className='num '+cl;
+    document.getElementById('cdName').textContent=c.nm;
+    document.getElementById('cdDesc').textContent=c.d;
+    document.getElementById('cdPm').innerHTML='<b>PM lens:</b> '+c.pm;
+  });
+  grid.appendChild(d);
+});
+
+/* ---------- curl builder ---------- */
+function buildCurl(){
+  const m=document.getElementById('curlMethod').value;
+  const url=document.getElementById('curlUrl').value;
+  const auth=document.getElementById('curlAuth').checked;
+  const data=document.getElementById('curlData').value.trim();
+  let parts=['<span class="tok-method">curl</span>'];
+  if(m!=='GET') parts.push('<span class="tok-flag">-X</span> '+m);
+  parts.push('<span class="tok-url">'+escapeHtml(url)+'</span>');
+  if(auth) parts.push('\\\n  <span class="tok-flag">-H</span> <span class="tok-str">"Authorization: Bearer abc123"</span>');
+  if(data){
+    parts.push('\\\n  <span class="tok-flag">-H</span> <span class="tok-str">"Content-Type: application/json"</span>');
+    parts.push('\\\n  <span class="tok-flag">-d</span> <span class="tok-str">\''+escapeHtml(data)+'\'</span>');
+  }
+  document.getElementById('curlOut').innerHTML=parts.join(' ');
+  // reading hint
+  let r='';
+  if(m==='GET'&&!data) r='📖 <b>Reading this:</b> no <code>-X</code> and no <code>-d</code> → it\'s just <b>reading</b> data. Safe to run repeatedly; nothing changes.';
+  else if(data) r='✍️ <b>Reading this:</b> there\'s a <code>-d</code> payload with <b>'+m+'</b> → this <b>changes data</b> on the server. For money endpoints, look closely before running.';
+  else r='✍️ <b>Reading this:</b> a <b>'+m+'</b> with no body → it changes data (e.g. deletes/updates) but doesn\'t need to send a payload.';
+  if(!auth) r+=' ⚠️ No auth header — this would likely come back <span class="s4">401</span>.';
+  document.getElementById('curlRead').innerHTML=r;
+}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+['curlMethod','curlUrl','curlAuth','curlData'].forEach(id=>{
+  document.getElementById(id).addEventListener('input',buildCurl);
+  document.getElementById(id).addEventListener('change',buildCurl);
+});
+buildCurl();
+
+/* ---------- WebSocket simulation ---------- */
+let wsTimer=null, wsRate=83.12;
+function wsLog(html){
+  const feed=document.getElementById('wsFeed');
+  const d=document.createElement('div'); d.className='ws-msg'; d.innerHTML=html;
+  feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
+}
+function wsConnect(){
+  if(wsTimer) return;
+  document.getElementById('wsFeed').innerHTML='';
+  document.getElementById('wsDot').className='conn-dot on';
+  document.getElementById('wsStatus').textContent='Live FX feed — connected (USD/INR)';
+  document.getElementById('wsConnect').disabled=true;
+  document.getElementById('wsDisconnect').disabled=false;
+  wsLog('<span class="t">→ opening connection to wss://feed.examplebank.com/fx …</span>');
+  wsLog('<span class="up">✓ connected. Server will now push prices as they change.</span>');
+  let t=0;
+  wsTimer=setInterval(()=>{
+    const move=(Math.sin(t)*0.08)+( (t*37%7)-3 )*0.02; // deterministic-ish wiggle
+    wsRate=Math.max(80, wsRate+move);
+    const up=move>=0;
+    document.getElementById('wsPrice').textContent='₹'+wsRate.toFixed(3);
+    document.getElementById('wsPrice').style.color = up?'var(--green)':'var(--red)';
+    const time=new Date().toLocaleTimeString();
+    wsLog('<span class="t">'+time+'</span> USD/INR → <span class="'+(up?'up':'down')+'">₹'+wsRate.toFixed(3)+' '+(up?'▲':'▼')+'</span> <span class="t">(pushed by server — you didn\'t ask)</span>');
+    t++;
+  },1100);
+}
+function wsDisconnect(){
+  clearInterval(wsTimer); wsTimer=null;
+  document.getElementById('wsDot').className='conn-dot off';
+  document.getElementById('wsStatus').textContent='Live FX feed — disconnected';
+  document.getElementById('wsConnect').disabled=false;
+  document.getElementById('wsDisconnect').disabled=true;
+  wsLog('<span class="down">✕ connection closed. Prices on screen are now stale — note there\'s no error, the number just stops moving. That\'s the classic WebSocket failure signature.</span>');
+}
+
+/* ---------- Webhook simulation ---------- */
+let whCount = 0;
+function whLog(target, html){
+  const feed=document.getElementById(target);
+  const d=document.createElement('div'); d.className='ws-msg'; d.innerHTML=html;
+  feed.appendChild(d); feed.scrollTop=feed.scrollHeight;
+}
+function whTime(){ return '<span class="t">'+new Date().toLocaleTimeString()+'</span> '; }
+function whPay(){
+  whCount++;
+  const evtId = 'evt_' + (7100 + whCount);
+  const payload = '{ "event": "payment.captured", "id": "'+evtId+'", "amount": 500, "currency": "INR" }';
+  whLog('whGateway', whTime()+'💳 Payment of ₹500 captured. Event <b>'+evtId+'</b> created.');
+  whLog('whGateway', whTime()+'→ Delivering webhook: <span class="up">POST</span> https://yourapp.com/webhooks/payments');
+  whAttempt(evtId, payload, 1);
+}
+function whAttempt(evtId, payload, attempt){
+  const delays = {1: 900, 2: 2500, 3: 4500}; // simulated backoff
+  setTimeout(()=>{
+    const down = document.getElementById('whDown').checked;
+    if(!down){
+      whLog('whServer', whTime()+'📩 Webhook received for <b>'+evtId+'</b>:');
+      whLog('whServer', '<span class="t">'+payload+'</span>');
+      whLog('whServer', whTime()+'✓ Verified signature, marked order paid. Replied <span class="up">200 OK</span>.');
+      whLog('whGateway', whTime()+'<span class="up">✓ Delivered '+evtId+' (got 200)'+(attempt>1?' on retry #'+(attempt-1):'')+'.</span>');
+    } else {
+      whLog('whGateway', whTime()+'<span class="down">✕ Delivery of '+evtId+' failed (your server returned 500).</span>');
+      if(attempt < 3){
+        whLog('whGateway', whTime()+'⏳ Will retry '+evtId+' in a few seconds (attempt '+(attempt+1)+' of 3)…');
+        whAttempt(evtId, payload, attempt+1);
+      } else {
+        whLog('whGateway', whTime()+'<span class="down">⚠ Gave up on '+evtId+' after 3 attempts. Event must now be replayed manually.</span>');
+        whLog('whServer', whTime()+'<span class="down">…nothing. Your system never heard about this payment — the order is stuck at "processing". This is the silent failure.</span>');
+      }
+    }
+  }, delays[attempt]);
+}
+
+/* ---------- Go Live: real GitHub API request ---------- */
+function livePreset(repo){
+  document.getElementById('liveRepo').value = repo;
+  document.getElementById('liveUrlRepo').textContent = repo;
+  sendLive();
+}
+document.getElementById('liveRepo').addEventListener('input', function(){
+  document.getElementById('liveUrlRepo').textContent = this.value.trim() || 'owner/repo';
+});
+async function sendLive(){
+  const repo = document.getElementById('liveRepo').value.trim().replace(/^\/+|\/+$/g,'');
+  const btn = document.getElementById('liveBtn');
+  const box = document.getElementById('liveResp'); box.classList.add('show');
+  const sEl = document.getElementById('lvStatus'), hEl = document.getElementById('lvHint');
+  const hiEl = document.getElementById('lvHighlights');
+  btn.disabled = true; btn.textContent = '⏳ In flight…';
+  sEl.textContent = '…'; sEl.className='';
+  document.getElementById('lvTime').textContent='…';
+  document.getElementById('lvRate').textContent='…';
+  hiEl.innerHTML=''; document.getElementById('lvBody').textContent='';
+  const t0 = performance.now();
+  try {
+    const res = await fetch('https://api.github.com/repos/' + repo, {
+      headers: { 'Accept': 'application/vnd.github+json' }
+    });
+    const ms = Math.round(performance.now() - t0);
+    const rate = res.headers.get('x-ratelimit-remaining');
+    const statusNames = {200:'OK',201:'Created',301:'Moved',403:'Forbidden',404:'Not Found',429:'Too Many Requests',500:'Internal Server Error',503:'Service Unavailable'};
+    sEl.textContent = res.status + ' ' + (res.statusText || statusNames[res.status] || '');
+    sEl.className = res.status < 300 ? 's2' : res.status < 500 ? 's4' : 's5';
+    document.getElementById('lvTime').textContent = ms + ' ms (real network time)';
+    document.getElementById('lvRate').textContent = rate !== null ? rate + ' / 60 this hour' : 'n/a';
+    const data = await res.json();
+    let raw = JSON.stringify(data, null, 2);
+    if(raw.length > 1600) raw = raw.slice(0, 1600) + '\n… (truncated for display — the full body is in your Network tab)';
+    document.getElementById('lvBody').textContent = raw;
+    if(res.ok){
+      hiEl.innerHTML = '<div class="card" style="margin:10px 0;padding:14px 18px">⭐ <b>'
+        + (data.stargazers_count ?? 0).toLocaleString() + '</b> stars &nbsp;·&nbsp; 🍴 <b>'
+        + (data.forks_count ?? 0).toLocaleString() + '</b> forks &nbsp;·&nbsp; 🐛 <b>'
+        + (data.open_issues_count ?? 0).toLocaleString() + '</b> open issues<br><span style="color:var(--muted);font-size:13.5px">'
+        + (data.description ? String(data.description).replace(/</g,'&lt;') : 'No description') + '</span></div>';
+      hEl.className='callout good';
+      hEl.innerHTML = '✅ <b>That was real.</b> Your browser just asked GitHub\'s servers about <code>'+repo.replace(/</g,'&lt;')+'</code> and this JSON came back across the internet in '+ms+' ms. Note the rate-limit header — a real API protecting itself, exactly like the 429 module said.';
+    } else if(res.status === 404){
+      hEl.className='callout danger';
+      hEl.innerHTML = '🔍 <b>A real 404!</b> GitHub\'s server is healthy — it\'s telling you <code>'+repo.replace(/</g,'&lt;')+'</code> doesn\'t exist (or is private). Exactly the "typo in the ID" failure from the status-codes module, except this one actually happened.';
+    } else if(res.status === 403 || res.status === 429){
+      hEl.className='callout danger';
+      hEl.innerHTML = '⛔ <b>You\'ve been rate limited — for real.</b> GitHub allows 60 unauthenticated requests per hour per IP and you\'ve used them up. The server is protecting itself, just like the 429 module described. Come back in a bit, or savor the authenticity.';
+    } else {
+      hEl.className='callout';
+      hEl.innerHTML = 'ℹ️ Status <b>'+res.status+'</b> — check the raw body above for GitHub\'s explanation. You know how to read it now.';
+    }
+  } catch(err){
+    const ms = Math.round(performance.now() - t0);
+    sEl.textContent = 'no response'; sEl.className='s5';
+    document.getElementById('lvTime').textContent = ms + ' ms';
+    document.getElementById('lvRate').textContent = '—';
+    document.getElementById('lvBody').textContent = String(err);
+    hEl.className='callout danger';
+    hEl.innerHTML = '🔌 <b>No status code at all</b> — the request never completed. That\'s the "no response / timeout" row from the troubleshooting playbook: you\'re offline, DNS failed, or something blocked the call. Notice how different this feels from a 404 — there was no answer, not a bad answer.';
+  } finally {
+    btn.disabled = false; btn.textContent = '🚀 Send real request';
+  }
+}
+
+/* ---------- Go Live round 2: real weather GET ---------- */
+const wxCodes = {0:"☀️ Clear sky",1:"🌤️ Mainly clear",2:"⛅ Partly cloudy",3:"☁️ Overcast",45:"🌫️ Fog",48:"🌫️ Fog",51:"🌦️ Light drizzle",53:"🌦️ Drizzle",55:"🌧️ Heavy drizzle",61:"🌧️ Light rain",63:"🌧️ Rain",65:"🌧️ Heavy rain",71:"🌨️ Light snow",73:"🌨️ Snow",75:"❄️ Heavy snow",80:"🌦️ Showers",81:"🌧️ Showers",82:"⛈️ Violent showers",95:"⛈️ Thunderstorm",96:"⛈️ Thunderstorm + hail",99:"⛈️ Thunderstorm + heavy hail"};
+document.getElementById('wxCity').addEventListener('change', function(){
+  const [lat,lon]=this.value.split(',');
+  document.getElementById('wxLat').textContent=(+lat).toFixed(2);
+  document.getElementById('wxLon').textContent=(+lon).toFixed(2);
+});
+async function sendWeather(){
+  const sel=document.getElementById('wxCity');
+  const city=sel.options[sel.selectedIndex].text;
+  const [lat,lon]=sel.value.split(',');
+  const btn=document.getElementById('wxBtn');
+  document.getElementById('wxResp').classList.add('show');
+  const sEl=document.getElementById('wxStatus'), hEl=document.getElementById('wxHint');
+  btn.disabled=true; btn.textContent='⏳ In flight…';
+  sEl.textContent='…'; sEl.className='';
+  document.getElementById('wxTime').textContent='…';
+  document.getElementById('wxHighlights').innerHTML=''; document.getElementById('wxBody').textContent='';
+  const t0=performance.now();
+  try{
+    const res=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current_weather=true');
+    const ms=Math.round(performance.now()-t0);
+    sEl.textContent=res.status+(res.ok?' OK':''); sEl.className=res.ok?'s2':(res.status<500?'s4':'s5');
+    document.getElementById('wxTime').textContent=ms+' ms (real network time)';
+    const data=await res.json();
+    document.getElementById('wxBody').textContent=JSON.stringify(data,null,2);
+    if(res.ok && data.current_weather){
+      const cw=data.current_weather;
+      document.getElementById('wxHighlights').innerHTML='<div class="card" style="margin:10px 0;padding:14px 18px"><b>'+city+' right now:</b> '
+        +(wxCodes[cw.weathercode]||'🌡️')+' &nbsp;·&nbsp; <b>'+cw.temperature+'°C</b> &nbsp;·&nbsp; 💨 '+cw.windspeed+' km/h wind</div>';
+      hEl.className='callout good';
+      hEl.innerHTML='✅ <b>That temperature is real, right now.</b> You changed <em>only the query parameters</em> and a server in another country measured '+city+'\'s actual weather for you. Same GET anatomy as GitHub — different company, same universal rules.';
+    } else {
+      hEl.className='callout danger';
+      hEl.innerHTML='⚠️ Status <b>'+res.status+'</b> — read the body above; the API explains what it didn\'t like (usually a malformed query parameter).';
+    }
+  }catch(err){
+    sEl.textContent='no response'; sEl.className='s5';
+    document.getElementById('wxTime').textContent=Math.round(performance.now()-t0)+' ms';
+    document.getElementById('wxBody').textContent=String(err);
+    hEl.className='callout danger';
+    hEl.innerHTML='🔌 <b>No status code at all</b> — the request never completed (offline, DNS, or blocked). No answer is a different failure from a bad answer.';
+  }finally{
+    btn.disabled=false; btn.textContent='🌦️ Get live weather';
+  }
+}
+
+/* ---------- Go Live round 3: real POST ---------- */
+async function sendPost(){
+  const btn=document.getElementById('postBtn');
+  document.getElementById('postResp').classList.add('show');
+  const sEl=document.getElementById('postStatus'), hEl=document.getElementById('postHint');
+  btn.disabled=true; btn.textContent='⏳ In flight…';
+  sEl.textContent='…'; sEl.className='';
+  document.getElementById('postTime').textContent='…';
+  document.getElementById('postBodyOut').textContent='';
+  const raw=document.getElementById('postBody').value;
+  let validJson=true; try{ JSON.parse(raw); }catch(e){ validJson=false; }
+  const t0=performance.now();
+  try{
+    const res=await fetch('https://jsonplaceholder.typicode.com/posts',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:raw
+    });
+    const ms=Math.round(performance.now()-t0);
+    const statusNames={200:'OK',201:'Created',400:'Bad Request',500:'Internal Server Error',503:'Service Unavailable'};
+    sEl.textContent=res.status+' '+(res.statusText||statusNames[res.status]||'');
+    sEl.className=res.status<300?'s2':res.status<500?'s4':'s5';
+    document.getElementById('postTime').textContent=ms+' ms (real network time)';
+    const text=await res.text();
+    let pretty=text;
+    try{ pretty=JSON.stringify(JSON.parse(text),null,2); }catch(e){}
+    if(pretty.length>1200) pretty=pretty.slice(0,1200)+'\n… (truncated)';
+    document.getElementById('postBodyOut').textContent=pretty;
+    if(res.status===201){
+      let idNote='';
+      try{ const d=JSON.parse(text); if(d.id!==undefined) idNote=' The server assigned it <code>id: '+d.id+'</code> — just like a bank would return a transfer ID.'; }catch(e){}
+      hEl.className='callout good';
+      hEl.innerHTML='✅ <b>201 Created — you just made something exist on a real server.</b>'+idNote+' Send it again and you\'d create <em>another</em> one; that\'s why blind retries on POST are dangerous with money. (JSONPlaceholder is a sandbox, so nothing is permanently stored — practice freely.)';
+    } else if(res.status>=500){
+      hEl.className='callout danger';
+      hEl.innerHTML='💥 <b>A real 500'+(validJson?'':' — and you caused it with malformed JSON')+'.</b> Look at the body: that\'s a raw <b>stack trace</b> leaking out, the signature of an unhandled crash. A well-behaved server should have replied <b class="s4">400 Bad Request</b> ("your note is garbled"); instead it fell over. You\'ve just witnessed the 4xx-vs-5xx distinction misbehave in the wild — and why engineers say "never trust your inputs."';
+    } else if(res.status>=400){
+      hEl.className='callout danger';
+      hEl.innerHTML='🙅 <b>'+res.status+'</b> — the server rejected the request. '+(validJson?'Check the body above for its reason.':'Your JSON is malformed (a missing quote or comma) and the server refused to parse it — a textbook 4xx: the caller\'s fault, fix the note and resend.');
+    } else {
+      hEl.className='callout';
+      hEl.innerHTML='ℹ️ Status <b>'+res.status+'</b> — an unusual reply for a create; read the body above.';
+    }
+  }catch(err){
+    sEl.textContent='no response'; sEl.className='s5';
+    document.getElementById('postTime').textContent=Math.round(performance.now()-t0)+' ms';
+    document.getElementById('postBodyOut').textContent=String(err);
+    hEl.className='callout danger';
+    hEl.innerHTML='🔌 <b>No response at all</b> — the POST never completed. With a GET that\'s just annoying; with a real money POST this is the scary case: <em>did it go through or not?</em> This is exactly why idempotency keys exist.';
+  }finally{
+    btn.disabled=false; btn.textContent='🚀 Send real POST';
+  }
+}
+
+/* ---------- Network tab sim ---------- */
+const netData=[
+  {name:"balance",method:"GET",status:"200",fam:2,type:"json",time:"82 ms",
+   detail:"<b>200 OK — healthy.</b><br>Request had a valid <code>Authorization</code> header, hit the right URL, came back fast with the balance JSON. Nothing to investigate here."},
+  {name:"transactions",method:"GET",status:"401",fam:4,type:"json",time:"45 ms",
+   detail:"<b>401 Unauthorized — your prime suspect.</b><br>Click → <b>Headers</b>: the <code>Authorization</code> header is missing or the token expired. Fix: refresh the session / re-login. This is why the transactions list is empty on screen."},
+  {name:"transfers",method:"POST",status:"500",fam:5,type:"json",time:"3.1 s",
+   detail:"<b>500 Internal Server Error — backend broke.</b><br>The caller did everything right; the server crashed handling it (and took 3.1s doing so). NOT a frontend bug. Route to the backend team and check: did anything deploy recently? Is it all users?"},
+  {name:"fx-rate",method:"GET",status:"200",fam:2,type:"json",time:"1.9 s",
+   detail:"<b>200 OK but SLOW (1.9s).</b><br>It worked, but took nearly 2 seconds — a performance suspect. If users complain the rate is laggy, this is why. Look at why this endpoint is slow (server load? big payload? downstream dependency?)."},
+  {name:"avatar.png",method:"GET",status:"404",fam:4,type:"img",time:"30 ms",
+   detail:"<b>404 Not Found.</b><br>A profile image is missing — wrong URL or the file was deleted. Low severity (just a broken image), but it's why there's a blank avatar. The server is healthy; the path is wrong."}
+];
+const netRows=document.getElementById('netRows');
+netData.forEach((r,i)=>{
+  const tr=document.createElement('tr'); tr.style.cursor='pointer';
+  const cl=r.fam===2?'s2':r.fam===4?'s4':'s5';
+  tr.innerHTML=`<td style="padding-left:18px;color:var(--accent)">${r.name}</td><td>${r.method}</td>
+    <td class="${cl}"><b>${r.status}</b></td><td style="color:var(--muted)">${r.type}</td>
+    <td class="${r.time.includes('s')?'s4':''}">${r.time}</td>`;
+  tr.addEventListener('click',()=>{
+    netRows.querySelectorAll('tr').forEach(x=>x.style.background='');
+    tr.style.background='var(--accent-soft)';
+    const det=document.getElementById('netDetail'); det.style.display='block';
+    det.innerHTML='<div style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">'+r.method+' /'+r.name+'</div>'+r.detail;
+  });
+  netRows.appendChild(tr);
+});
+
+/* ---------- Quiz ---------- */
+const quiz=[
+  {q:"A customer says the app shows their balance fine, but the transaction list is blank. You open the Network tab and see <code>GET /transactions</code> came back <b>401</b>. What's the most likely cause?",
+   opts:["The backend servers are down","Their auth token expired or is missing for that request","The transactions don't exist","The internet connection dropped"],
+   correct:1,
+   exp:"401 = 'who are you?' — an authentication problem. The balance loaded (so the app works and the network is fine), but this specific request lacked valid credentials. A 5xx would point at the backend; 401 points at auth/session."},
+  {q:"During an incident you see a <b>wall of 503s</b> across all users, starting right after a deploy. What does this tell you?",
+   opts:["Users are sending malformed requests","It's a frontend display bug","The server is overwhelmed/down — likely the deploy broke it; escalate to backend","It's a certificate problem"],
+   correct:2,
+   exp:"5xx = the SERVER's fault, not the caller's. 503 specifically = overwhelmed/unavailable. 'All users + right after a deploy' screams a bad release. This is the 'wake the backend team' category — and you'd flag the deploy as the likely trigger."},
+  {q:"An engineer pastes a curl command with <code>-X POST</code>, an <code>Authorization</code> header, and a <code>-d</code> JSON body containing an amount. What kind of operation is this?",
+   opts:["Just reading data, safe to run repeatedly","Creating/changing something (here, a money transfer) — be careful","Deleting an account","Opening a WebSocket"],
+   correct:1,
+   exp:"<code>-X POST</code> + a <code>-d</code> payload = creating or changing data. With an 'amount' in the body, this is moving money. Unlike a GET, running it twice could create two transfers — exactly why retries on POST are dangerous."},
+  {q:"Your live price feed froze on screen — stale numbers, but <b>no error message at all</b>. What's the most likely culprit?",
+   opts:["A 404 on the price endpoint","The WebSocket connection dropped silently and didn't reconnect","A certificate expired","The user is rate-limited (429)"],
+   correct:1,
+   exp:"'Frozen with no error' is the classic WebSocket signature. Unlike HTTP (which fails loudly with a status code), a dropped WebSocket just stops delivering — the last price sits there looking valid. The fix is usually auto-reconnect logic."},
+  {q:"The Network tab shows the request you expected is <b>completely absent</b> — it never fired. Where's the bug?",
+   opts:["In the backend server","In the database","In the app/frontend — the request was never sent","In the network/firewall"],
+   correct:2,
+   exp:"If no request appears at all, nothing ever left the app. The backend can't be blamed for a request it never received. The bug is in the frontend logic — a button not wired up, a condition that's false, a crash before the call. (Check the Console tab for JS errors.)"},
+  {q:"Customers paid successfully at the payment gateway, but their orders are stuck at 'processing' in your app. The gateway's dashboard shows the payments as captured. What's the prime suspect?",
+   opts:["The customers' cards were declined","Your app's webhook endpoint failed to receive (or errored on) the gateway's 'payment captured' events","The gateway's API is returning 500s to your GET requests","A TLS certificate expired"],
+   correct:1,
+   exp:"The money moved (the gateway confirms it), so payment itself worked. The missing link is the notification back to YOUR system — the webhook. Check: did the gateway deliver the event (their delivery logs), did your endpoint return 200, and can you replay the missed events? Webhook failures are silent by default — nothing errors on the user's screen."},
+  {q:"What's the difference between <b>401</b> and <b>403</b>?",
+   opts:["They're identical","401 = 'who are you?' (not authenticated); 403 = 'I know you, but you're not allowed' (no permission)","401 is a server error, 403 is a client error","403 means the page loaded slowly"],
+   correct:1,
+   exp:"Both are 4xx (caller-side), but they're distinct: 401 = no valid identity provided (log in / refresh token). 403 = identity is fine, but this user lacks permission for this action (e.g. accessing someone else's account). Mixing them up sends you debugging the wrong thing."}
+];
+function renderQuiz(){
+  const host=document.getElementById('quizHost'); host.innerHTML=''; answered=0;
+  document.getElementById('quizScore').style.display='none';
+  quiz.forEach((item,qi)=>{
+    const wrap=document.createElement('div'); wrap.className='quiz-q';
+    wrap.innerHTML=`<div class="qn">${qi+1}. ${item.q}</div>`;
+    item.opts.forEach((o,oi)=>{
+      const opt=document.createElement('div'); opt.className='opt'; opt.innerHTML=o;
+      opt.addEventListener('click',()=>{
+        if(wrap.dataset.done) return; wrap.dataset.done='1'; answered++;
+        wrap.querySelectorAll('.opt').forEach(x=>x.classList.add('disabled'));
+        if(oi===item.correct){opt.classList.add('correct'); score++;}
+        else{opt.classList.add('wrong'); wrap.querySelectorAll('.opt')[item.correct].classList.add('correct');}
+        const ex=wrap.querySelector('.explain'); ex.classList.add('show');
+        if(answered===quiz.length) showScore();
+      });
+      wrap.appendChild(opt);
+    });
+    const ex=document.createElement('div'); ex.className='explain'; ex.innerHTML='<b>Why:</b> '+item.exp;
+    wrap.appendChild(ex);
+    host.appendChild(wrap);
+  });
+}
+let score=0, answered=0;
+function showScore(){
+  const box=document.getElementById('quizScore'); box.style.display='block';
+  document.getElementById('quizScoreNum').textContent=score+' / '+quiz.length;
+  let msg = score===quiz.length ? "Flawless — you can hold your own in any incident channel. 🏆" :
+            score>=quiz.length-2 ? "Strong. You've got the core instincts down. 💪" :
+            "Good start — replay the demos and you'll lock it in. 🔁";
+  document.getElementById('quizScoreMsg').textContent=msg;
+  box.scrollIntoView({behavior:'smooth'});
+}
+function resetQuiz(){score=0; renderQuiz(); window.scrollTo({top:0});}
+renderQuiz();
+
+/* ---------- Glossary ---------- */
+const gloss=[
+  ["API","A contract + menu: the defined set of requests one system lets another make, and the shape of the replies. (Application Programming Interface.)"],
+  ["Endpoint","One specific address/action on an API, e.g. <code>/accounts/4471/balance</code>. One item on the menu."],
+  ["Client","The thing that asks — your app, a browser, another service."],
+  ["Server","The thing that answers — holds the data and does the work."],
+  ["Request","A note sent from client to server. Has a method, URL, headers, and (sometimes) a body."],
+  ["Response","The reply from server to client. Has a status code, headers, and a body."],
+  ["HTTP","The rules/language for sending requests and responses on the web."],
+  ["HTTPS","HTTP wrapped in encryption (TLS). The padlock. Mandatory for anything sensitive like banking."],
+  ["TLS / SSL","The encryption layer behind HTTPS. 'SSL' is the older name people still use loosely."],
+  ["Certificate","The server's verified ID, proving it's really who it claims. Expired certs cause real outages."],
+  ["Method / Verb","The action: GET (read), POST (create), PUT/PATCH (update), DELETE (remove)."],
+  ["GET","Read data. No side effects — safe to retry."],
+  ["POST","Create something new (a transfer, an account). Changes data — retries can duplicate."],
+  ["PATCH","Update part of something. PUT replaces the whole thing."],
+  ["DELETE","Remove something."],
+  ["Header","Metadata on a request/response — auth token, content type, etc. Not the main data."],
+  ["Body / Payload","The actual data being sent (on writes) or returned. Usually JSON."],
+  ["JSON","The common text format for data: <code>\"label\": value</code> pairs. <code>{}</code> = object, <code>[]</code> = list."],
+  ["Status code","3-digit result. 2xx success, 3xx redirect, 4xx your fault, 5xx server's fault."],
+  ["401 Unauthorized","Not authenticated — 'who are you?' Missing/expired token. The most common error you'll meet."],
+  ["403 Forbidden","Authenticated but not permitted — 'I know you, you still can't.'"],
+  ["404 Not Found","That resource/URL doesn't exist. Often a typo in an ID."],
+  ["429 Too Many Requests","Rate limited — slow down."],
+  ["500 / 503","Server errors. 500 = it crashed; 503 = it's overwhelmed/down. Backend's problem, not the caller's."],
+  ["Authentication","Proving WHO you are (token/login). vs Authorization = what you're ALLOWED to do."],
+  ["Token / API key","Your credential carried in the Authorization header to prove identity."],
+  ["curl","Command-line tool to send one request by hand. Engineers paste it to share the exact failing request."],
+  ["WebSocket","A persistent two-way connection. The server can push data anytime — for live feeds, chat, prices."],
+  ["Polling","Repeatedly re-asking over HTTP ('anything new?') instead of using a WebSocket or webhook. Simpler but laggy/wasteful."],
+  ["Webhook","A reversed API call: another system POSTs to YOUR server's URL when an event happens (e.g. 'payment captured'). Fails silently if your endpoint is down — good senders retry."],
+  ["Webhook signature","A header on a webhook proving it really came from the sender. Your server must verify it, or anyone could fake a 'payment succeeded' event."],
+  ["Replay (webhooks)","Asking the sender to re-deliver past events your server missed. Most payment gateways support this — the fix for 'orders stuck at processing.'"],
+  ["Idempotent","Safe to repeat with the same effect. GETs are; naive POSTs aren't (hence double-charge risks)."],
+  ["Rate limit","A cap on how many requests you can send in a window. Exceed it → 429."],
+  ["CORS","A browser security rule about which sites may call which APIs. 'CORS error' = the browser blocked a cross-site call; a config fix on the server."],
+  ["Network tab","Browser tool (right-click → Inspect → Network) showing every request, its status, and timing. Your #1 debugging window."],
+  ["Console tab","Browser tool showing the app's own errors (JavaScript). Where frontend bugs surface when Network looks clean."],
+  ["Latency","How long a request takes. High latency = slow but working — a different problem from an error."],
+  ["Timeout","Giving up after waiting too long for a response. Points to something hung or unreachable."]
+];
+function renderGloss(filter=''){
+  const list=document.getElementById('glossList'); list.innerHTML='';
+  gloss.filter(g=>(g[0]+g[1]).toLowerCase().includes(filter.toLowerCase())).forEach(g=>{
+    const d=document.createElement('div'); d.className='card'; d.style.padding='12px 18px'; d.style.margin='8px 0';
+    d.innerHTML='<b>'+g[0]+'</b> — <span style="color:var(--muted)">'+g[1]+'</span>';
+    list.appendChild(d);
+  });
+}
+function filterGloss(){renderGloss(document.getElementById('glossSearch').value);}
+renderGloss();
+</script>
+</body>
+</html>
